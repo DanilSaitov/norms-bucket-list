@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -18,6 +12,13 @@ enum Role {
   student
   staff
   admin
+}
+
+// Enum for traditions category
+enum Category {
+    sports
+    academic
+    social
 }
 
 // Users table
@@ -35,4 +36,16 @@ model User {
   updated_at         DateTime @updatedAt
 
   @@map("users")
+}
+
+model Traditions {
+    tradition_id Int @id @default(autoincrement())
+    title String
+    description String
+    category Category
+    intermittent Boolean @default(false)
+    is_active Boolean
+    created_at DateTime @default(now())
+
+    @@map("traditions")
 }
