@@ -1,9 +1,32 @@
 require('dotenv').config();
 
 const express = require('express');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Import routes
+const authRoutes = require('./routes/authRoutes');
+
+// Middleware
+// CORS - Allow frontend (localhost:5173) to communicate with backend
+app.use(cors({
+  origin: 'http://localhost:5173', // React dev server
+  credentials: true // Allow cookies to be sent
+}));
+
+// Parse JSON request bodies (for POST requests)
+app.use(express.json());
+
+// Parse cookies from requests
+app.use(cookieParser());
+
+// API Routes
+app.use('/api/auth', authRoutes);
+
+// Test route
 app.get('/', (req, res) => res.send('Hello from norms-bucket-list'));
 
 app.get('/hello', (req, res) => {
