@@ -14,6 +14,7 @@ UNC Charlotte campus traditions tracker for students.
 **Backend:**
 - Node.js + Express.js
 - PostgreSQL database
+- Prisma ORM
 - Jest for testing
 - dotenv for environment variables
 
@@ -34,6 +35,7 @@ UNC Charlotte campus traditions tracker for students.
    ```bash
    npm install
    ```
+   *Note: This automatically generates the Prisma Client via postinstall script*
 
 2. **Configure database:**
    - Copy `.env.example` to `.env`
@@ -42,18 +44,29 @@ UNC Charlotte campus traditions tracker for students.
      DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/norms_bucketlist
      ```
 
-3. **Run tests:**
+3. **Set up PostgreSQL database:**
+   - Open pgAdmin and start your PostgreSQL server
+   - Create a database named `norms_bucketlist` (or match your DATABASE_URL)
+   - Verify the server is running on port 5432 (or your configured port)
+
+4. **Run database migrations:**
+   ```bash
+   npm run db:migrate
+   ```
+   This creates all database tables (users, etc.) based on the Prisma schema
+
+5. **Run tests:**
    ```bash
    npm test
    ```
 
-4. **Start backend server:**
+6. **Start backend server:**
    ```bash
    npm start
    ```
    Server runs on `http://localhost:3000`
 
-5. **Test endpoints:**
+7. **Test endpoints:**
    - Home: `http://localhost:3000/`
    - Hello page: `http://localhost:3000/hello`
    - Database demo: `http://localhost:3000/db` (requires PostgreSQL running)
@@ -87,6 +100,13 @@ npm run console
 - Backend API: Port 3000
 - Frontend dev server: Port 5173
 - PostgreSQL: Port 5432
+
+### Useful Database Commands
+
+- `npm run db:migrate` - Create and apply new database migrations
+- `npm run db:reset` - Reset database and apply all migrations (removes all data)
+- `npm run db:studio` - Open Prisma Studio to view/edit database in browser
+- `npm run db:push` - Push schema changes without creating migration files
 
 ## Environment Variables
 
