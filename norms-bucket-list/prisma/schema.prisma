@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum for user roles
+enum Role {
+  student
+  staff
+  admin
+}
+
+// Users table
+model User {
+  user_id            Int      @id @default(autoincrement())
+  username           String   @unique @db.VarChar(15)
+  first_name         String   @db.VarChar(32)
+  last_name          String   @db.VarChar(32)
+  email              String   @unique @db.VarChar(255)
+  password           String   @db.VarChar(255) // Will be hashed/salted
+  role               Role     @default(student)
+  profile_image_url  String?  // Optional field, nullable
+  graduation_year    Int      @db.Integer
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  @@map("users")
+}
