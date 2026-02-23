@@ -3,15 +3,19 @@
 const prisma = require('../config/database');
 
 async function traditionsSearch(req, res) {
+  const {search} = req.query;
   try {
-      console.log(req.search);
+      console.log(search);
     const traditions = await prisma.traditions.findMany({
-      where: { 
-          OR [title { contains : req.search }, description { contains : req.search }]
+      where: {
+        OR: [
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } }
+        ]
       }
     });
 
-    if (!traditions) {
+    if (traditions.length == 0) {
       return res.status(404).json({ error: 'User not found' });
     }
 
