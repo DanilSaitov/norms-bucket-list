@@ -1,0 +1,126 @@
+/* Home Page Styling */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 20px;
+  color: #00703C;
+  background-color: #f5f5f5;
+}
+
+.home-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-header {
+  background-color: #00703C; /* UNCC green */
+  color: white;
+  padding: 24px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+.home-header h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.user-info span {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.logout-btn {
+  padding: 10px 24px;
+  background-color: white;
+  color: #00703C;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.logout-btn:hover {
+  background-color: #B9D949; /* UNCC gold */
+  color: #00703C;
+}
+
+.home-content {
+  padding: 60px 80px;
+  flex: 1;
+  width: 100%;
+}
+
+.placeholder {
+  background: white;
+  padding: 60px 80px;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 100%;
+}
+
+.placeholder h2 {
+  color: #00703C;
+  margin-bottom: 16px;
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.placeholder p {
+  color: #666;
+  margin-bottom: 40px;
+  font-size: 18px;
+}
+
+.user-details {
+  background-color: #f9f9f9;
+  padding: 40px 50px;
+  border-radius: 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.user-details h3 {
+  color: #00703C;
+  margin-bottom: 30px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.user-details p {
+  color: #333;
+  margin: 16px 0;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.user-details strong {
+  color: #00703C;
+  font-weight: 600;
+  display: inline-block;
+  min-width: 180px;
+}
