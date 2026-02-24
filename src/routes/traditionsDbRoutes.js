@@ -8,6 +8,6 @@ const dbController = require('../controllers/traditionsDbController');
 /**
  * GET /traditions
  */
-router.get('/traditions', dbController.traditionsSearch);
+router.get('/', dbController.traditionsSearch);
 
 module.exports = router;
