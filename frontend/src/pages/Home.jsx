@@ -58,8 +58,10 @@ function Home() {
         withCredentials: true
       });
       setTraditions(response.data);
+      console.log(response.data.traditions);
     } catch (err) {
       console.error('Error fetching traditions:', err);
+      setTraditions([]);
     }
   }, [searchTerm]);
 
@@ -89,23 +91,31 @@ function Home() {
       </header>
 
       <main className="home-content">
-        <div className="search-bar">
+        <div className="home-container">
           <h2>Home Page</h2>
           <p>Welcome to Norm's Bucketlist! This is where challenges will appear.</p>
 
         {/* Search Input */}
+        <div className="search-bar">
           <div className="search-input-container" style={{ margin: '20px 0' }}>
             <input
               type="text"
               placeholder="Search traditions..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                if (value.trim() === "") setTraditions([]);
+              }}
               style={{ padding: '10px', width: '100%', maxWidth: '400px' }}
             />
           </div>
 
           {/* Traditions Results (boxes) */}
           <div className="traditions-list">
+            {searchTerm && traditions.length === 0 && (
+              <p>"{searchTerm}" not found.</p>
+            )}
+
             {traditions.map((item) => (
               <div key={item.id} className="tradition-box" style={{ border: '1px solid #ccc', padding: '15px', marginBottom: '10px', borderRadius: '5px' }}>
                 <h3>{item.title}</h3>
@@ -114,6 +124,7 @@ function Home() {
               </div>
             ))}
           </div>
+        </div>
             
             
 

@@ -4,6 +4,11 @@ const prisma = require('../config/database');
 
 async function traditionsSearch(req, res) {
   const {search} = req.query;
+
+  if (!search) {
+    return res.status(400).json({error: "Query required"});
+  }
+
   try {
       console.log(search);
     const traditions = await prisma.traditions.findMany({
@@ -15,11 +20,7 @@ async function traditionsSearch(req, res) {
       }
     });
 
-    if (traditions.length == 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.json({ traditions });
+    res.json(traditions);
 
   } catch (error) {
     console.error('Get traditions error:', error);

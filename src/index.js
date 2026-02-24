@@ -9,6 +9,7 @@ const port = process.env.PORT || 3000;
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
+const dbRoutes = require('./routes/traditionsDbRoutes');
 
 // Middleware
 // CORS - Allow frontend (localhost:5173) to communicate with backend
@@ -25,6 +26,8 @@ app.use(cookieParser());
 
 // API Routes
 app.use('/api/auth', authRoutes);
+
+app.use('/api/traditions', dbRoutes);
 
 // Test route
 app.get('/', (req, res) => res.send('Hello from norms-bucket-list'));
