@@ -106,3 +106,5 @@ app.listen(port, () => {
 	console.log(`- Hello page: http://localhost:${port}/hello`);
 	console.log(`- DB page: http://localhost:${port}/db  (requires DATABASE_URL)`);
 });
+
+module.exports = app;
