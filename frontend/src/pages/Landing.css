@@ -1,0 +1,368 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Lato:wght@400;700&family=Nunito:wght@400;600;700&family=Poppins:wght@400;600;700&family=Rubik:wght@400;500;700&display=swap');
+
+:root {
+  --uncc-green: #005035;
+  --uncc-gold: #B3A369;
+  --uncc-white: #FFFFFF;
+  --uncc-black: #000000;
+  --font-nunito: 'Nunito', sans-serif;
+  --font-latto: 'Lato', sans-serif;
+  --font-lato: 'Lato', sans-serif;
+  --font-poppins: 'Poppins', sans-serif;
+  --font-rubik: 'Rubik', sans-serif;
+  --font-dm-sans: 'DM Sans', sans-serif;
+}
+
+.landing-page {
+  min-height: 100vh;
+  background: #f2f2f2;
+  overflow-x: clip;
+}
+
+.landing-container {
+  font-family: var(--font-poppins);
+  min-height: 100svh;
+  height: 100svh;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  color: var(--uncc-white);
+  text-align: left;
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+  overflow: hidden;
+  padding-bottom: 5.8rem;
+}
+
+.landing-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .6rem 2.5rem;
+  background: rgba(0, 80, 53, 0.8);
+  z-index: 3;
+  opacity: 0;
+  transform: translateY(-14px);
+}
+
+.nav-left,
+.nav-right {
+  display: flex;
+  align-items: center;
+}
+
+.charlotte-logo {
+  height: 3.5rem;
+  width: auto;
+}
+
+.nav-right {
+  gap: 0.75rem;
+}
+
+.nav-btn {
+  color: var(--uncc-black);
+  text-decoration: none;
+  font-weight: 700;
+  padding: 0.55rem 1rem;
+  border-radius: 6px;
+}
+
+.nav-btn-login {
+  background-color: var(--uncc-white);
+}
+
+.nav-btn-signup {
+  background-color: var(--uncc-gold);
+}
+
+.nav-btn:hover {
+  background-color: #cbb87a;
+  color: var(--uncc-black);
+}
+
+.nav-btn-login:hover {
+  background-color: #f1f1f1;
+  color: var(--uncc-black);
+}
+
+.landing-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--hero-bg-image, url('../assets/homepage/homeBackground3.jpg'));
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.75);
+  z-index: 0;
+}
+
+.landing-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.landing-content {
+  margin-top: 5.4rem;
+  max-width: 820px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(26px);
+}
+
+.landing-content h1 {
+  font-size: clamp(3rem, 6vw, 5.6rem);
+  font-weight: 700;
+  margin: 0;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+}
+
+.landing-content p {
+  font-size: clamp(1.15rem, 2.2vw, 1.6rem);
+  margin-top: 1rem;
+  margin-bottom: 1.35rem;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
+}
+
+.explore-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--uncc-gold);
+  color: var(--uncc-black);
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-dm-sans);
+  font-size: 1.24rem;
+  font-weight: 700;
+  padding: 1.08rem 2.1rem;
+  margin-top: 0.55rem;
+  cursor: pointer;
+  opacity: 0;
+  transform: none;
+  transition: color 0.22s ease;
+}
+
+.explore-btn:hover {
+  color: #111111;
+}
+
+.explore-btn::before {
+  content: none;
+}
+
+.explore-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #e2d4ab;
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.28s ease;
+  z-index: -1;
+}
+
+.landing-container.hero-ready .landing-nav {
+  animation: navSlideDown 700ms ease-out both;
+}
+
+.landing-container.hero-ready .landing-content {
+  animation: heroFadeUp 850ms 120ms ease-out both;
+}
+
+.landing-container.hero-ready .explore-btn {
+  animation: exploreFadeIn 620ms 760ms ease-out forwards;
+}
+
+.explore-btn:hover::after {
+  transform: scaleY(1);
+}
+
+.layout-cinematic-left {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.layout-cinematic-left::after {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.46) 48%, rgba(0, 0, 0, 0.08) 100%);
+}
+
+.layout-cinematic-left .landing-content {
+  margin-left: 4.5rem;
+  max-width: 700px;
+}
+
+.layout-cinematic-left .landing-content h1 {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: var(--font-rubik);
+}
+
+.about-app-section {
+  background: #ffffff;
+  color: #1d1d1d;
+  padding: 4.25rem 2rem 4.7rem;
+  position: relative;
+  z-index: 5;
+  box-shadow: 0 -14px 36px rgba(0, 0, 0, 0.28);
+}
+
+.about-app-section h2 {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-rubik);
+  font-size: clamp(2.5rem, 6.2vw, 4rem);
+  color: var(--uncc-green);
+}
+
+.about-summary {
+  margin: 1rem auto 2.1rem;
+  max-width: 74ch;
+  text-align: center;
+  line-height: 1.6;
+  font-family: var(--font-nunito);
+  font-size: 1.08rem;
+}
+
+.about-grid {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  gap: 1.7rem 2.2rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.about-text-block {
+  padding: 0.2rem 0.15rem;
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
+}
+
+.about-text-block.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.about-text-block h3 {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-lato);
+  color: var(--uncc-green);
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+}
+
+.about-text-block p {
+  margin: 0;
+  line-height: 1.62;
+  font-family: var(--font-dm-sans);
+  font-size: 1.08rem;
+  color: #2c2c2c;
+}
+
+.about-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-bottom: 0.35rem;
+  font-size: 1.7rem;
+}
+
+@keyframes navSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes exploreFadeIn {
+  from {
+    opacity: 0;
+    transform: none;
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-nav {
+    padding: 0.75rem 1rem;
+  }
+
+  .charlotte-logo {
+    height: 38px;
+  }
+
+  .nav-right {
+    gap: 0.5rem;
+  }
+
+  .nav-btn {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .landing-content {
+    margin-left: 1.25rem;
+    margin-top: 4.3rem;
+    max-width: 90%;
+    padding: 0;
+  }
+
+  .landing-content h1 {
+    font-size: 2.55rem;
+  }
+
+  .landing-content p {
+    font-size: 1.2rem;
+  }
+
+  .layout-cinematic-left .landing-content {
+    margin-left: 1.25rem;
+  }
+
+  .about-app-section {
+    padding: 3.5rem 1rem 4rem;
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
+}
