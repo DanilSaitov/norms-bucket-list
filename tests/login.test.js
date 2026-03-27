@@ -14,6 +14,14 @@ beforeAll(async () => {
             done();
         });
     });
+    const user = await prisma.user.delete({
+      where: {
+        OR: [
+          { username: "works" },
+          { email: "works@charlotte.edu" }
+        ]
+      }
+    });
 });
 
 afterAll(async () => {
@@ -58,10 +66,53 @@ describe('signup login apis', ()=> {
 
         expect(res.status).toBe(400);
     });
+
+    test('POST /api/auth/signup existingUser', async () => {
+        const res = await(fetch(`${baseUrl}/api/auth/signup`, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                username: "test",
+                first_name: "e",
+                last_name: "xample",
+                email: "test@charlotte.edu",
+                password: "example123",
+                graduation_year: "2027",
+            })
+        }));
+        const data = await res.json();
+
+        expect(res.status).toBe(409);
+    });
+
+    test('POST /api/auth/signup existingUser', async () => {
+        const res = await(fetch(`${baseUrl}/api/auth/signup`, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                username: "works",
+                first_name: "e",
+                last_name: "xample",
+                email: "works@charlotte.edu",
+                password: "worksworks",
+                graduation_year: "2027",
+            })
+        }));
+        const data = await res.json();
+
+        expect(res.status).toBe(201);
+        expect(data.user.username).toBe("works");
+    });
 });
 
 describe('/login login apis', ()=> {
-    test('POST /api/auth/signup empty fail', async () => {
+    test('POST /api/auth/login empty fail', async () => {
         const res = await(fetch(`${baseUrl}/api/auth/login`, {
             method: "POST",
             headers: {
@@ -77,7 +128,7 @@ describe('/login login apis', ()=> {
         expect(res.status).toBe(400);
     });
 
-    test('POST /api/auth/signup invalid email', async () => {
+    test('POST /api/auth/login invalid email', async () => {
         const res = await(fetch(`${baseUrl}/api/auth/login`, {
             method: "POST",
             headers: {
@@ -93,7 +144,7 @@ describe('/login login apis', ()=> {
         expect(res.status).toBe(401);
     });
 
-    test('POST /api/auth/signup invalid pass', async () => {
+    test('POST /api/auth/login invalid pass', async () => {
         const res = await(fetch(`${baseUrl}/api/auth/login`, {
             method: "POST",
             headers: {
