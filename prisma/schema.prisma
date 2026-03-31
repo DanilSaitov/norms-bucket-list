@@ -21,6 +21,31 @@ enum Category {
     social
 }
 
+//For the tags table
+enum Tags_enum {
+    sports
+    academic
+    social
+    club
+    engagement
+    landmark
+    food
+    event
+    on-campus
+    off-campus
+    date-sensitive
+    misc
+}
+
+model Tag {
+    tag_id              Int     @id @default(autoincrement())
+    tag             Tags_enum
+    tradition_id    Int
+    tradition       Traditions @relation(fields: [tradition_id], references: [tradition_id])
+
+    @@map("tags")
+}
+
 // Users table
 model User {
   user_id            Int      @id @default(autoincrement())
@@ -46,6 +71,7 @@ model Traditions {
     intermittent Boolean @default(false)
     is_active Boolean
     created_at DateTime @default(now())
+    tags Tag[]
 
     @@map("traditions")
 }
