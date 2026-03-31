@@ -27,7 +27,13 @@ enum Tags_enum {
     academic
     social
     club
+    engagement
+    landmark
     food
+    event
+    on-campus
+    off-campus
+    misc
 }
 
 model Tag {
