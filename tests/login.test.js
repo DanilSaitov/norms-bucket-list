@@ -14,7 +14,7 @@ beforeAll(async () => {
             done();
         });
     });
-    const user = await prisma.user.delete({
+    const user = await prisma.user.deleteMany({
       where: {
         OR: [
           { username: "works" },
