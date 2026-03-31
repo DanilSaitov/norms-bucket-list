@@ -33,6 +33,7 @@ enum Tags_enum {
     event
     on-campus
     off-campus
+    date-sensitive
     misc
 }
 
