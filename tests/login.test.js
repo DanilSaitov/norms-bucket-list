@@ -159,5 +159,23 @@ describe('/login login apis', ()=> {
         const data = await res.json();
         expect(res.status).toBe(401);
     });
+
+    test('POST /api/auth/login SUCCESS', async () => {
+        const res = await(fetch(`${baseUrl}/api/auth/login`, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                 email: "test@charlotte.edu",
+                password: "testtest",
+            })           
+        }));
+        const data = await res.json();
+
+        console.log("==============================\n" + res.status);
+        console.log("==============================\n" + data);
+    });
 });
 
