@@ -25,7 +25,7 @@ function DashboardShell({ user, onLogout, children }) {
         </Link>
 
         <nav className="home-nav">
-          <a href="#completed" className="home-nav-link">Completed Traditions</a>
+          <Link to="/completed" className="home-nav-link">Completed Traditions</Link>
           <Link to="/home#traditions" className="home-nav-link">Pending Traditions</Link>
           <a href="#notifications" className="home-nav-link">Notifications</a>
           <a href="#feedback" className="home-nav-link">Feedback</a>
