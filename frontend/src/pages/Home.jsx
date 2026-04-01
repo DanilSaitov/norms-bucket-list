@@ -12,6 +12,11 @@ import homeImg3 from '../assets/homepage/homeBackground3.jpg';
 import './Home.css';
 
 const TRADITION_CARD_IMAGES = [homeImg1, homeImg2, homeImg3];
+
+function getStorageKey(userId) {
+  return `completedTraditions-${userId}`;
+}
+
 const DEMO_TRADITIONS = [
   {
     id: 'demo-1',
@@ -44,6 +49,7 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [traditions, setTraditions] = useState([]);
+  const [completedTraditions, setCompletedTraditions] = useState([]);
   const navigate = useNavigate();
 
   const checkAuthentication = useCallback(async () => {
@@ -51,7 +57,10 @@ function Home() {
       const response = await axios.get('http://localhost:3000/api/auth/me', {
         withCredentials: true,
       });
-      setUser(response.data.user);
+      const authUser = response.data.user;
+      setUser(authUser);
+      const stored = localStorage.getItem(getStorageKey(authUser.user_id));
+      setCompletedTraditions(stored ? JSON.parse(stored) : []);
       setLoading(false);
     } catch (err) {
       console.error('Not authenticated:', err);
@@ -89,6 +98,22 @@ function Home() {
   useEffect(() => {
     if (user) fetchTraditions();
   }, [searchTerm, user, fetchTraditions]);
+
+  const isTraditionCompleted = (item) => {
+    const itemKey = item.tradition_id ?? item.id;
+    return completedTraditions.some((completed) => (completed.tradition_id ?? completed.id) === itemKey);
+  };
+
+  const handleComplete = (item) => {
+    if (!user) return;
+
+    const isAlreadyCompleted = isTraditionCompleted(item);
+    if (isAlreadyCompleted) return;
+
+    const nextCompleted = [...completedTraditions, item];
+    setCompletedTraditions(nextCompleted);
+    localStorage.setItem(getStorageKey(user.user_id), JSON.stringify(nextCompleted));
+  };
 
   const visibleTraditions = traditions.length > 0 ? traditions : DEMO_TRADITIONS;
 
@@ -129,8 +154,17 @@ function Home() {
             <div className="tradition-card__body">
               <h3>{item.title}</h3>
               {item.description && <p>{item.description}</p>}
-              <button type="button" className="complete-btn" disabled={item.isDemo}>
-                {item.isDemo ? 'Demo Tradition' : 'Mark Complete'}
+              <button
+                type="button"
+                className="complete-btn"
+                disabled={item.isDemo || isTraditionCompleted(item)}
+                onClick={() => handleComplete(item)}
+              >
+                {item.isDemo
+                  ? 'Demo Tradition'
+                  : isTraditionCompleted(item)
+                    ? 'Completed'
+                    : 'Mark Complete'}
               </button>
             </div>
           </article>
