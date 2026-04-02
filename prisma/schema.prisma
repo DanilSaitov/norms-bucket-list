@@ -31,9 +31,9 @@ enum Tags_enum {
     landmark
     food
     event
-    on-campus
-    off-campus
-    date-sensitive
+    oncampus
+    offcampus
+    datesensitive
     misc
 }
 
