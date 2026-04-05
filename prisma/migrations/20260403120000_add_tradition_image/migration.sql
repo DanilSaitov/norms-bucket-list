@@ -1,0 +1,12 @@
+-- Add an image column to traditions for storing the card image URL/path
+ALTER TABLE "traditions"
+ADD COLUMN IF NOT EXISTS "image" TEXT;
+
+-- Backfill existing rows with a placeholder image path
+UPDATE "traditions"
+SET "image" = 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80'
+WHERE "image" IS NULL;
+
+-- Make image required for all future traditions
+ALTER TABLE "traditions"
+ALTER COLUMN "image" SET NOT NULL;

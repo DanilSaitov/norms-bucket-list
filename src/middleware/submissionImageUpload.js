@@ -1,0 +1,49 @@
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
+
+const ALLOWED_IMAGE_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/heic',
+  'image/heif',
+]);
+
+const uploadDir = path.join(__dirname, '../../uploads/submissions');
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (_req, file, cb) => {
+    const sanitizedBase = file.originalname
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[^a-zA-Z0-9_-]/g, '-');
+    const extension = path.extname(file.originalname) || '.jpg';
+    cb(null, `${Date.now()}-${sanitizedBase}${extension}`);
+  },
+});
+
+const fileFilter = (_req, file, cb) => {
+  if (!ALLOWED_IMAGE_MIME_TYPES.has(file.mimetype)) {
+    return cb(new Error('Unsupported image type. Use JPG, PNG, WEBP, GIF, or HEIC.'));
+  }
+
+  return cb(null, true);
+};
+
+const uploadSubmissionImage = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+});
+
+module.exports = uploadSubmissionImage;

@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import Profile from './pages/Profile';
 import CompletedTraditions from './pages/CompletedTraditions';
+import PendingTraditions from './pages/PendingTraditions';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         
         {/* Protected routes */}
         <Route path="/home" element={<Home />} />
+        <Route path="/pending" element={<PendingTraditions />} />
         <Route path="/completed" element={<CompletedTraditions />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>

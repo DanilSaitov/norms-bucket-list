@@ -1,0 +1,38 @@
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
+
+const uploadDir = path.join(__dirname, '../../uploads/traditions');
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (_req, file, cb) => {
+    const sanitizedBase = file.originalname.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '-');
+    const extension = path.extname(file.originalname) || '.jpg';
+    cb(null, `${Date.now()}-${sanitizedBase}${extension}`);
+  },
+});
+
+const fileFilter = (_req, file, cb) => {
+  if (!file.mimetype.startsWith('image/')) {
+    return cb(new Error('Only image files are allowed'));
+  }
+
+  return cb(null, true);
+};
+
+const uploadTraditionImage = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+});
+
+module.exports = uploadTraditionImage;

@@ -1,0 +1,19 @@
+const prisma = require('../src/config/database');
+
+async function main() {
+  await prisma.$executeRawUnsafe('ALTER TABLE "traditions" ADD COLUMN IF NOT EXISTS "image" TEXT');
+  await prisma.traditions.deleteMany();
+  await prisma.$executeRawUnsafe(
+    "ALTER TABLE \"traditions\" ALTER COLUMN \"image\" SET NOT NULL",
+  );
+  console.log('Cleared traditions');
+}
+
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

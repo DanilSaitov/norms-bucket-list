@@ -1,0 +1,229 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import DashboardShell from '../components/DashboardShell';
+import './PendingTraditions.css';
+
+const API_BASE_URL = 'http://localhost:3000';
+
+const TAG_COLORS = {
+  sports: '#00703c',
+  academic: '#1e88e5',
+  social: '#e65100',
+  club: '#6d4c41',
+  engagement: '#c62828',
+  landmark: '#ad1457',
+  food: '#fbc02d',
+  event: '#3949ab',
+  oncampus: '#388e3c',
+  offcampus: '#00838f',
+  datesensitive: '#5e35b1',
+  misc: '#757575',
+};
+
+function resolveTraditionImage(image) {
+  if (!image) return '';
+  if (image.startsWith('http://') || image.startsWith('https://')) return image;
+  if (image.startsWith('/')) return `${API_BASE_URL}${image}`;
+  return `${API_BASE_URL}/${image}`;
+}
+
+function formatDateTime(value) {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleString();
+}
+
+function PendingTraditions() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submissions, setSubmissions] = useState([]);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const navigate = useNavigate();
+
+  const checkAuthentication = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
+        withCredentials: true,
+      });
+      setUser(response.data.user);
+    } catch (err) {
+      console.error('Not authenticated:', err);
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  const fetchPending = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/traditions/submissions/me/pending`, {
+        withCredentials: true,
+      });
+      setSubmissions(Array.isArray(response.data.submissions) ? response.data.submissions : []);
+    } catch (err) {
+      console.error('Error fetching pending submissions:', err);
+      setSubmissions([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      await checkAuthentication();
+      await fetchPending();
+      if (!cancelled) setLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [checkAuthentication, fetchPending]);
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, {
+        withCredentials: true,
+      });
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
+  const openSubmissionDetails = (submission) => {
+    setSelectedSubmission(submission);
+  };
+
+  const closeSubmissionDetails = () => {
+    setSelectedSubmission(null);
+  };
+
+  const handleCardKeyDown = (event, submission) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      openSubmissionDetails(submission);
+    }
+  };
+
+  if (loading) {
+    return <div className="loading">Loading...</div>;
+  }
+
+  return (
+    <DashboardShell user={user} onLogout={handleLogout}>
+      <section className="pending-page" id="pending-traditions">
+        <h2 className="pending-page__title">Pending Traditions</h2>
+
+        {submissions.length === 0 ? (
+          <p className="pending-page__empty">You do not have any pending submissions right now.</p>
+        ) : (
+          <div className="pending-page__grid">
+            {submissions.map((submission) => {
+              const tradition = submission.tradition;
+              const tags = Array.isArray(tradition?.tags)
+                ? tradition.tags.map((t) => t?.tag).filter(Boolean)
+                : [];
+              const fallbackTags = tags.length > 0
+                ? tags
+                : (tradition?.category ? [tradition.category] : []);
+
+              return (
+                <article
+                  key={submission.submission_id}
+                  className="pending-card"
+                  onClick={() => openSubmissionDetails(submission)}
+                  onKeyDown={(event) => handleCardKeyDown(event, submission)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  {tradition?.image && (
+                    <div className="pending-card__media">
+                      <img src={resolveTraditionImage(tradition.image)} alt={tradition.title || 'Tradition'} />
+                    </div>
+                  )}
+
+                  <div className="pending-card__body">
+                    <h3>{tradition?.title || 'Untitled Tradition'}</h3>
+
+                    {fallbackTags.length > 0 && (
+                      <div className="pending-card__tags">
+                        {fallbackTags.map((tag, i) => (
+                          <span
+                            key={`${submission.submission_id}-${tag}-${i}`}
+                            className="pending-card__tag"
+                            style={{ backgroundColor: TAG_COLORS[tag] || '#777' }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {tradition?.description && <p>{tradition.description}</p>}
+
+                    <div className="pending-card__meta">
+                      <p><strong>Status:</strong> {submission.status}</p>
+                      <p><strong>Submitted:</strong> {formatDateTime(submission.submitted_at)}</p>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {selectedSubmission && (
+        <div className="pending-modal-backdrop" onClick={closeSubmissionDetails}>
+          <div className="pending-modal" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              className="pending-modal__close"
+              onClick={closeSubmissionDetails}
+              aria-label="Close submission details"
+            >
+              ×
+            </button>
+
+            <h3 className="pending-modal__title">
+              {selectedSubmission.tradition?.title || 'Pending Submission'}
+            </h3>
+
+            <div className="pending-modal__meta">
+              <p><strong>Status:</strong> {selectedSubmission.status}</p>
+              <p><strong>Submitted:</strong> {formatDateTime(selectedSubmission.submitted_at)}</p>
+            </div>
+
+            {selectedSubmission.image_submission && (
+              <div className="pending-modal__section">
+                <h4>Your Image Submission</h4>
+                <img
+                  className="pending-modal__submission-image"
+                  src={resolveTraditionImage(selectedSubmission.image_submission)}
+                  alt="Your submission"
+                />
+              </div>
+            )}
+
+            <div className="pending-modal__section">
+              <h4>Your Text Submission</h4>
+              <p>
+                {selectedSubmission.text_submission || 'No text submission was provided.'}
+              </p>
+            </div>
+
+            {selectedSubmission.tradition?.description && (
+              <div className="pending-modal__section">
+                <h4>Tradition Description</h4>
+                <p>{selectedSubmission.tradition.description}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </DashboardShell>
+  );
+}
+
+export default PendingTraditions;

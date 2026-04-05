@@ -1,23 +1,110 @@
 // Traditions DB controller
 
 const prisma = require('../config/database');
+const { Tags_enum } = require('@prisma/client');
+
+const VALID_TAGS = new Set(Object.values(Tags_enum));
+
+function getSubmissionModel() {
+  return (
+    prisma.tradition_Submissions
+    || prisma.traditionSubmissions
+    || prisma.tradition_submissions
+  );
+}
+
+function normalizeTagValue(value) {
+  if (typeof value !== 'string') return '';
+  return value.trim().toLowerCase().replace(/[\s_-]+/g, '');
+}
+
+function parseTagsInput(input) {
+  if (input == null) return { tags: [], invalid: [] };
+
+  const rawValues = Array.isArray(input)
+    ? input
+    : String(input)
+      .split(',')
+      .map((value) => value.trim());
+
+  const normalized = rawValues
+    .map(normalizeTagValue)
+    .filter(Boolean);
+
+  const uniqueTags = [...new Set(normalized)];
+  const tags = [];
+  const invalid = [];
+
+  uniqueTags.forEach((tag) => {
+    if (VALID_TAGS.has(tag)) {
+      tags.push(tag);
+    } else {
+      invalid.push(tag);
+    }
+  });
+
+  return { tags, invalid };
+}
 
 async function traditionsSearch(req, res) {
-  const {search} = req.query;
+  const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+  const normalizedSearch = normalizeTagValue(search);
+  const searchAsTag = VALID_TAGS.has(normalizedSearch) ? normalizedSearch : null;
 
-  if (!search) {
-    return res.status(400).json({error: "Query required"});
+  const { tags: tagFilters, invalid: invalidTagFilters } = parseTagsInput(req.query.tags);
+
+  if (invalidTagFilters.length > 0) {
+    return res.status(400).json({
+      error: 'Invalid tags in query',
+      invalid_tags: invalidTagFilters,
+      allowed_tags: [...VALID_TAGS],
+    });
+  }
+
+  const whereClause = {
+    is_active: true,
+  };
+
+  if (search) {
+    whereClause.OR = [
+      { title: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+    ];
+
+    if (searchAsTag) {
+      whereClause.OR.push({
+        tags: {
+          some: {
+            tag: searchAsTag,
+          },
+        },
+      });
+    }
+  }
+
+  if (tagFilters.length > 0) {
+    whereClause.tags = {
+      some: {
+        tag: {
+          in: tagFilters,
+        },
+      },
+    };
   }
 
   try {
-      console.log(search);
     const traditions = await prisma.traditions.findMany({
-      where: {
-        OR: [
-          { title: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } }
-        ]
-      }
+      where: whereClause,
+      include: {
+        tags: {
+          select: {
+            tag: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
     });
 
     res.json(traditions);
@@ -28,6 +115,237 @@ async function traditionsSearch(req, res) {
   }
 }
 
+async function createTradition(req, res) {
+  try {
+    const {
+      title,
+      description,
+      category,
+      image,
+      intermittent = false,
+      is_active = true,
+      tags,
+    } = req.body;
+
+    if (!title || !description || !category || !image) {
+      return res.status(400).json({ error: 'title, description, category, and image are required' });
+    }
+
+    const { tags: parsedTags, invalid: invalidTags } = parseTagsInput(tags);
+
+    if (invalidTags.length > 0) {
+      return res.status(400).json({
+        error: 'Invalid tags in request body',
+        invalid_tags: invalidTags,
+        allowed_tags: [...VALID_TAGS],
+      });
+    }
+
+    const created = await prisma.traditions.create({
+      data: {
+        title,
+        description,
+        category,
+        image,
+        intermittent: Boolean(intermittent),
+        is_active: Boolean(is_active),
+        ...(parsedTags.length > 0
+          ? {
+              tags: {
+                create: parsedTags.map((tag) => ({ tag })),
+              },
+            }
+          : {}),
+      },
+      include: {
+        tags: {
+          select: {
+            tag: true,
+          },
+        },
+      },
+    });
+
+    return res.status(201).json(created);
+  } catch (error) {
+    console.error('Create tradition error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+function uploadTraditionImage(req, res) {
+  if (!req.file) {
+    return res.status(400).json({ error: 'Image file is required' });
+  }
+
+  const imagePath = `/uploads/traditions/${req.file.filename}`;
+  return res.status(201).json({ image: imagePath });
+}
+
+async function getMyTraditionSubmission(req, res) {
+  const traditionId = Number(req.params.traditionId);
+
+  if (!Number.isInteger(traditionId) || traditionId <= 0) {
+    return res.status(400).json({ error: 'Invalid tradition id' });
+  }
+
+  try {
+    const submissionModel = getSubmissionModel();
+
+    if (!submissionModel) {
+      throw new Error('Submission model is not available on Prisma client. Run prisma generate and restart the server.');
+    }
+
+    const latestSubmission = await submissionModel.findFirst({
+      where: {
+        user_id: req.userId,
+        tradition_id: traditionId,
+      },
+      orderBy: {
+        submitted_at: 'desc',
+      },
+      select: {
+        submission_id: true,
+        status: true,
+        approved: true,
+        submitted_at: true,
+        admin_comment: true,
+        text_submission: true,
+        image_submission: true,
+      },
+    });
+
+    return res.json({ submission: latestSubmission || null });
+  } catch (error) {
+    console.error('Get my tradition submission error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function createTraditionSubmission(req, res) {
+  const traditionId = Number(req.params.traditionId);
+  const textSubmission = typeof req.body.text_submission === 'string'
+    ? req.body.text_submission.trim()
+    : '';
+
+  if (!Number.isInteger(traditionId) || traditionId <= 0) {
+    return res.status(400).json({ error: 'Invalid tradition id' });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'Image submission is required' });
+  }
+
+  if (!textSubmission) {
+    return res.status(400).json({ error: 'Text submission is required' });
+  }
+
+  try {
+    const submissionModel = getSubmissionModel();
+
+    if (!submissionModel) {
+      throw new Error('Submission model is not available on Prisma client. Run prisma generate and restart the server.');
+    }
+
+    const tradition = await prisma.traditions.findUnique({
+      where: { tradition_id: traditionId },
+      select: { tradition_id: true, is_active: true },
+    });
+
+    if (!tradition || !tradition.is_active) {
+      return res.status(404).json({ error: 'Tradition not found' });
+    }
+
+    const latestSubmission = await submissionModel.findFirst({
+      where: {
+        user_id: req.userId,
+        tradition_id: traditionId,
+      },
+      orderBy: {
+        submitted_at: 'desc',
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    if (latestSubmission && latestSubmission.status !== 'denied') {
+      return res.status(409).json({
+        error: 'You can only submit again after your previous submission is denied.',
+      });
+    }
+
+    const createdSubmission = await submissionModel.create({
+      data: {
+        user_id: req.userId,
+        tradition_id: traditionId,
+        image_submission: `/uploads/submissions/${req.file.filename}`,
+        text_submission: textSubmission,
+        status: 'pending',
+        approved: null,
+      },
+      select: {
+        submission_id: true,
+        status: true,
+        approved: true,
+        submitted_at: true,
+        admin_comment: true,
+        text_submission: true,
+        image_submission: true,
+      },
+    });
+
+    return res.status(201).json({ submission: createdSubmission });
+  } catch (error) {
+    console.error('Create tradition submission error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function getMyPendingSubmissions(req, res) {
+  try {
+    const submissionModel = getSubmissionModel();
+
+    if (!submissionModel) {
+      throw new Error('Submission model is not available on Prisma client. Run prisma generate and restart the server.');
+    }
+
+    const submissions = await submissionModel.findMany({
+      where: {
+        user_id: req.userId,
+        status: 'pending',
+      },
+      include: {
+        tradition: {
+          select: {
+            tradition_id: true,
+            title: true,
+            description: true,
+            image: true,
+            category: true,
+            tags: {
+              select: { tag: true },
+            },
+          },
+        },
+      },
+      orderBy: {
+        submitted_at: 'desc',
+      },
+    });
+
+    return res.json({ submissions });
+  } catch (error) {
+    console.error('Get my pending submissions error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
 module.exports = {
-    traditionsSearch,
+  traditionsSearch,
+  createTradition,
+  uploadTraditionImage,
+  getMyTraditionSubmission,
+  createTraditionSubmission,
+  getMyPendingSubmissions,
 };

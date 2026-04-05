@@ -2,41 +2,59 @@
 // Main page after user logs in
 // Currently a placeholder - will eventually show bucket list challenges
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DashboardShell from '../components/DashboardShell';
-import homeImg1 from '../assets/homepage/homeBackground1.png';
-import homeImg2 from '../assets/homepage/homeBackground2.jpg';
-import homeImg3 from '../assets/homepage/homeBackground3.jpg';
 import './Home.css';
 
-const TRADITION_CARD_IMAGES = [homeImg1, homeImg2, homeImg3];
+// Tag color mapping (can be extended)
+const TAG_COLORS = {
+  sports: '#00703c',
+  academic: '#1e88e5',
+  social: '#e65100',
+  club: '#6d4c41',
+  engagement: '#c62828',
+  landmark: '#ad1457',
+  food: '#fbc02d',
+  event: '#3949ab',
+  oncampus: '#388e3c',
+  offcampus: '#00838f',
+  datesensitive: '#5e35b1',
+  misc: '#757575',
+};
 
-function getStorageKey(userId) {
-  return `completedTraditions-${userId}`;
+function TagBadge({ tag }) {
+  const color = TAG_COLORS[tag] || '#888';
+  return (
+    <span
+      className="tradition-tag-badge"
+      style={{
+        backgroundColor: color,
+      }}
+    >
+      {tag}
+    </span>
+  );
 }
 
-const DEMO_TRADITIONS = [
-  {
-    id: 'demo-1',
-    title: 'Attend a Home Football Game',
-    description: 'Cheer on the Niners and experience game-day traditions on campus.',
-    isDemo: true,
-  },
-  {
-    id: 'demo-2',
-    title: 'Join a Student Club Fair',
-    description: 'Explore organizations and find a group that matches your interests.',
-    isDemo: true,
-  },
-  {
-    id: 'demo-3',
-    title: 'Take a Photo at the Charlotte Sign',
-    description: 'Snap a campus memory and share it with friends.',
-    isDemo: true,
-  },
-];
+const API_BASE_URL = 'http://localhost:3000';
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80';
+
+function formatDateTime(value) {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleString();
+}
+
+function resolveTraditionImage(image, cacheToken) {
+  if (!image) return FALLBACK_IMAGE;
+  if (image.startsWith('http://') || image.startsWith('https://')) return image;
+  const separator = image.includes('?') ? '&' : '?';
+  if (image.startsWith('/')) return `${API_BASE_URL}${image}${separator}v=${cacheToken}`;
+  return `${API_BASE_URL}/${image}${separator}v=${cacheToken}`;
+}
 
 function normalizeTraditions(payload) {
   if (Array.isArray(payload)) return payload;
@@ -45,32 +63,45 @@ function normalizeTraditions(payload) {
 }
 
 function Home() {
+  const imageCacheToken = useState(() => Date.now())[0];
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [traditions, setTraditions] = useState([]);
-  const [completedTraditions, setCompletedTraditions] = useState([]);
+  const [activeTradition, setActiveTradition] = useState(null);
+  const [submissionStatus, setSubmissionStatus] = useState(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isSubmissionOpen, setIsSubmissionOpen] = useState(false);
+  const [submissionImage, setSubmissionImage] = useState(null);
+  const [submissionText, setSubmissionText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState('');
   const navigate = useNavigate();
-
-  const checkAuthentication = useCallback(async () => {
-    try {
-      const response = await axios.get('http://localhost:3000/api/auth/me', {
-        withCredentials: true,
-      });
-      const authUser = response.data.user;
-      setUser(authUser);
-      const stored = localStorage.getItem(getStorageKey(authUser.user_id));
-      setCompletedTraditions(stored ? JSON.parse(stored) : []);
-      setLoading(false);
-    } catch (err) {
-      console.error('Not authenticated:', err);
-      navigate('/login');
-    }
-  }, [navigate]);
+  const canCreateSubmission = !submissionStatus || submissionStatus.status === 'denied';
+  const hasLockedSubmission = Boolean(submissionStatus && !canCreateSubmission);
 
   useEffect(() => {
-    checkAuthentication();
-  }, [checkAuthentication]);
+    let cancelled = false;
+
+    axios.get('http://localhost:3000/api/auth/me', {
+      withCredentials: true,
+    })
+      .then((response) => {
+        if (cancelled) return;
+        const authUser = response.data.user;
+        setUser(authUser);
+        setLoading(false);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Not authenticated:', err);
+        navigate('/login');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
 
   const handleLogout = async () => {
     try {
@@ -83,39 +114,108 @@ function Home() {
     }
   };
 
-  const fetchTraditions = useCallback(async () => {
-    try {
-      const response = await axios.get(`http://localhost:3000/api/traditions?search=${searchTerm}`, {
-        withCredentials: true,
-      });
-      setTraditions(normalizeTraditions(response.data));
-    } catch (err) {
-      console.error('Error fetching traditions:', err);
-      setTraditions([]);
-    }
-  }, [searchTerm]);
-
   useEffect(() => {
-    if (user) fetchTraditions();
-  }, [searchTerm, user, fetchTraditions]);
-
-  const isTraditionCompleted = (item) => {
-    const itemKey = item.tradition_id ?? item.id;
-    return completedTraditions.some((completed) => (completed.tradition_id ?? completed.id) === itemKey);
-  };
-
-  const handleComplete = (item) => {
     if (!user) return;
+    let cancelled = false;
 
-    const isAlreadyCompleted = isTraditionCompleted(item);
-    if (isAlreadyCompleted) return;
+    axios.get(`http://localhost:3000/api/traditions?search=${searchTerm}`, {
+      withCredentials: true,
+    })
+      .then((response) => {
+        if (cancelled) return;
+        setTraditions(normalizeTraditions(response.data));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error('Error fetching traditions:', err);
+        setTraditions([]);
+      });
 
-    const nextCompleted = [...completedTraditions, item];
-    setCompletedTraditions(nextCompleted);
-    localStorage.setItem(getStorageKey(user.user_id), JSON.stringify(nextCompleted));
+    return () => {
+      cancelled = true;
+    };
+  }, [searchTerm, user]);
+
+  const fetchSubmissionStatus = async (traditionId) => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/traditions/${traditionId}/submissions/me`,
+        { withCredentials: true },
+      );
+      setSubmissionStatus(response.data.submission || null);
+    } catch (err) {
+      console.error('Error fetching submission status:', err);
+      setSubmissionStatus(null);
+    }
   };
 
-  const visibleTraditions = traditions.length > 0 ? traditions : DEMO_TRADITIONS;
+  const handleViewDetails = (item) => {
+    setActiveTradition(item);
+    setIsDetailsOpen(true);
+    setIsSubmissionOpen(false);
+    setSubmissionImage(null);
+    setSubmissionText('');
+    setSubmissionError('');
+    fetchSubmissionStatus(item.tradition_id ?? item.id);
+  };
+
+  const closeDetails = () => {
+    setIsDetailsOpen(false);
+    setIsSubmissionOpen(false);
+    setActiveTradition(null);
+    setSubmissionImage(null);
+    setSubmissionText('');
+    setSubmissionError('');
+  };
+
+  const handleSubmitSubmission = async (e) => {
+    e.preventDefault();
+    if (!activeTradition) return;
+    if (!canCreateSubmission) {
+      setSubmissionError('You can only submit again after your previous submission is denied.');
+      return;
+    }
+    if (!submissionImage) {
+      setSubmissionError('Please upload an image.');
+      return;
+    }
+    if (!submissionText.trim()) {
+      setSubmissionError('Please add a text submission.');
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmissionError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('image_submission', submissionImage);
+      formData.append('text_submission', submissionText.trim());
+
+      const traditionId = activeTradition.tradition_id ?? activeTradition.id;
+      const response = await axios.post(
+        `${API_BASE_URL}/api/traditions/${traditionId}/submissions`,
+        formData,
+        { withCredentials: true },
+      );
+
+      setSubmissionStatus(response.data.submission || null);
+      setIsSubmissionOpen(false);
+      setSubmissionImage(null);
+      setSubmissionText('');
+    } catch (err) {
+      console.error('Error submitting tradition:', err);
+      if (err?.response?.data?.error) {
+        setSubmissionError(err.response.data.error);
+      } else if (err?.message) {
+        setSubmissionError(`Failed to submit tradition: ${err.message}`);
+      } else {
+        setSubmissionError('Failed to submit tradition.');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return <div className="loading">Loading...</div>;
@@ -132,44 +232,178 @@ function Home() {
             onChange={(e) => {
               const nextValue = e.target.value;
               setSearchTerm(nextValue);
-              if (nextValue.trim() === '') setTraditions([]);
             }}
           />
         </div>
       </section>
 
-      <section className="traditions-grid" id="traditions">
+      <section className="home-traditions-grid" id="traditions">
         {searchTerm && traditions.length === 0 && (
           <p className="traditions-empty">&quot;{searchTerm}&quot; not found.</p>
         )}
 
-        {visibleTraditions.map((item, index) => (
-          <article key={item.id ?? `t-${index}`} className="tradition-card">
-            <div className="tradition-card__media">
+        {!searchTerm && traditions.length === 0 && (
+          <p className="traditions-empty">No traditions available yet.</p>
+        )}
+
+        {traditions.map((item, index) => {
+          const normalizedTags = Array.isArray(item.tags)
+            ? item.tags.map((t) => (t?.tag || t)).filter(Boolean)
+            : [];
+          const displayTags = normalizedTags.length > 0
+            ? normalizedTags
+            : (item.category ? [item.category] : []);
+
+          return (
+          <article key={item.tradition_id ?? item.id ?? `t-${index}`} className="home-tradition-card">
+            <div className="home-tradition-card__media">
               <img
-                src={TRADITION_CARD_IMAGES[index % TRADITION_CARD_IMAGES.length]}
+                src={resolveTraditionImage(item.image, imageCacheToken)}
                 alt={item.title ? `${item.title}` : 'Tradition'}
               />
             </div>
-            <div className="tradition-card__body">
+            <div className="home-tradition-card__body">
               <h3>{item.title}</h3>
               {item.description && <p>{item.description}</p>}
+              {displayTags.length > 0 && (
+                <div className="home-tradition-tags-row">
+                  {displayTags.map((tag, i) => (
+                    <TagBadge key={`${tag}-${i}`} tag={tag} />
+                  ))}
+                </div>
+              )}
               <button
                 type="button"
                 className="complete-btn"
-                disabled={item.isDemo || isTraditionCompleted(item)}
-                onClick={() => handleComplete(item)}
+                onClick={() => handleViewDetails(item)}
               >
-                {item.isDemo
-                  ? 'Demo Tradition'
-                  : isTraditionCompleted(item)
-                    ? 'Completed'
-                    : 'Mark Complete'}
+                View Details
               </button>
             </div>
           </article>
-        ))}
+          );
+        })}
       </section>
+
+      {isDetailsOpen && activeTradition && (
+        <div className="home-modal-backdrop" onClick={closeDetails}>
+          <div className="home-modal" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="home-modal-close" onClick={closeDetails}>
+              ×
+            </button>
+
+            <div className="home-modal-banner">
+              <img
+                src={resolveTraditionImage(activeTradition.image, imageCacheToken)}
+                alt={activeTradition.title ? `${activeTradition.title}` : 'Tradition'}
+              />
+            </div>
+
+            <div className="home-modal-content">
+              <div className="home-modal-layout">
+                <div className="home-modal-left">
+                  <h2>{activeTradition.title}</h2>
+
+                  <div className="home-tradition-tags-row">
+                    {(() => {
+                      const detailTags = (Array.isArray(activeTradition.tags) ? activeTradition.tags : [])
+                        .map((t) => (t?.tag || t))
+                        .filter(Boolean);
+                      const tagsToDisplay = detailTags.length > 0
+                        ? detailTags
+                        : (activeTradition.category ? [activeTradition.category] : []);
+
+                      return tagsToDisplay.map((tag, i) => (
+                        <TagBadge key={`${tag}-${i}`} tag={tag} />
+                      ));
+                    })()}
+                  </div>
+
+                  {activeTradition.description && (
+                    <p className="home-modal-description">{activeTradition.description}</p>
+                  )}
+                </div>
+
+                <div className="home-modal-right">
+                  <div className="home-modal-status">
+                    <h4>Submission Status</h4>
+                    {!submissionStatus && <p>No submission yet.</p>}
+                    {submissionStatus && (
+                      <div className="home-modal-status-card">
+                        <p><strong>Status:</strong> {submissionStatus.status}</p>
+                        <p><strong>Submitted:</strong> {formatDateTime(submissionStatus.submitted_at)}</p>
+                        {submissionStatus.admin_comment && (
+                          <p><strong>Admin Comment:</strong> {submissionStatus.admin_comment}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="home-modal-actions">
+                    {canCreateSubmission && (
+                      <button
+                        type="button"
+                        className="complete-btn"
+                        onClick={() => {
+                          setIsSubmissionOpen(true);
+                          setSubmissionError('');
+                        }}
+                      >
+                        Make Submission
+                      </button>
+                    )}
+                  </div>
+
+                  {hasLockedSubmission && (
+                    <div className="home-submitted-preview">
+                      <h4>Your Submitted Proof</h4>
+                      {submissionStatus.image_submission && (
+                        <img
+                          className="home-submitted-preview__image"
+                          src={resolveTraditionImage(submissionStatus.image_submission, imageCacheToken)}
+                          alt="Your submitted proof"
+                        />
+                      )}
+                      <p className="home-submitted-preview__text">
+                        {submissionStatus.text_submission || 'No text submission was provided.'}
+                      </p>
+                    </div>
+                  )}
+
+                  {isSubmissionOpen && canCreateSubmission && (
+                    <form className="home-submission-form" onSubmit={handleSubmitSubmission}>
+                      <label htmlFor="submission-image">Image Proof</label>
+                      <input
+                        id="submission-image"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setSubmissionImage(e.target.files?.[0] || null)}
+                      />
+
+                      <label htmlFor="submission-text">Text Submission</label>
+                      <textarea
+                        id="submission-text"
+                        rows={5}
+                        value={submissionText}
+                        onChange={(e) => setSubmissionText(e.target.value)}
+                        placeholder="Add your submission details here..."
+                      />
+
+                      {submissionError && <p className="home-submission-error">{submissionError}</p>}
+
+                      <div className="home-submission-actions">
+                        <button type="submit" className="complete-btn" disabled={submitting}>
+                          {submitting ? 'Submitting...' : 'Submit'}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardShell>
   );
 }

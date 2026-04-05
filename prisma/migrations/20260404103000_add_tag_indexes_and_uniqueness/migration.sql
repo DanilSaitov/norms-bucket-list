@@ -1,0 +1,14 @@
+-- Remove duplicate tag rows before enforcing uniqueness.
+DELETE FROM "tags" t1
+USING "tags" t2
+WHERE t1."tag_id" > t2."tag_id"
+  AND t1."tradition_id" = t2."tradition_id"
+  AND t1."tag" = t2."tag";
+
+-- Ensure each tradition can have each tag only once.
+CREATE UNIQUE INDEX IF NOT EXISTS "tags_tradition_id_tag_key"
+ON "tags"("tradition_id", "tag");
+
+-- Speed up tag-based filtering.
+CREATE INDEX IF NOT EXISTS "tags_tag_idx"
+ON "tags"("tag");

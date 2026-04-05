@@ -8,6 +8,7 @@
   "scripts": {
     "test": "jest",
     "start": "node src/index.js",
+    "dev": "npm --prefix frontend run dev",
     "frontend": "cd frontend && npm run dev",
     "console": "node src/hello.js",
     "postinstall": "prisma generate",
@@ -28,6 +29,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2",
     "pg": "^8.18.0",
     "prisma": "^6.19.2"
   },

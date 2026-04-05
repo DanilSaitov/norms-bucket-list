@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -12,9 +13,16 @@ const authRoutes = require('./routes/authRoutes');
 const dbRoutes = require('./routes/traditionsDbRoutes');
 
 // Middleware
-// CORS - Allow frontend (localhost:5173) to communicate with backend
+// CORS - Allow frontend dev servers on localhost to communicate with backend
 app.use(cors({
-  origin: 'http://localhost:5173', // React dev server
+	origin: (origin, callback) => {
+		// Allow non-browser tools (no Origin header) and localhost Vite ports.
+		if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
+			return callback(null, true);
+		}
+
+		return callback(new Error('Not allowed by CORS'));
+	},
   credentials: true // Allow cookies to be sent
 }));
 
@@ -23,6 +31,15 @@ app.use(express.json());
 
 // Parse cookies from requests
 app.use(cookieParser());
+
+// Serve uploaded files (including tradition images) without cache to avoid stale local assets.
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+	etag: false,
+	lastModified: false,
+	setHeaders: (res) => {
+		res.setHeader('Cache-Control', 'no-store');
+	},
+}));
 
 // API Routes
 app.use('/api/auth', authRoutes);

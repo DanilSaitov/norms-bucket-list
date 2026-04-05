@@ -2,9 +2,29 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import DashboardShell from '../components/DashboardShell';
+import './CompletedTraditions.css';
 
 function getStorageKey(userId) {
   return `completedTraditions-${userId}`;
+}
+
+function sanitizeCompletedTraditions(items) {
+  if (!Array.isArray(items)) return [];
+
+  const seen = new Set();
+  const cleaned = [];
+
+  items.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+    const itemId = item.tradition_id ?? item.id;
+    if (itemId == null) return;
+    if (seen.has(itemId)) return;
+
+    seen.add(itemId);
+    cleaned.push(item);
+  });
+
+  return cleaned;
 }
 
 function CompletedTraditions() {
@@ -21,7 +41,10 @@ function CompletedTraditions() {
       const authUser = response.data.user;
       setUser(authUser);
       const stored = localStorage.getItem(getStorageKey(authUser.user_id));
-      setCompletedTraditions(stored ? JSON.parse(stored) : []);
+      const parsed = stored ? JSON.parse(stored) : [];
+      const sanitized = sanitizeCompletedTraditions(parsed);
+      setCompletedTraditions(sanitized);
+      localStorage.setItem(getStorageKey(authUser.user_id), JSON.stringify(sanitized));
       setLoading(false);
     } catch (err) {
       console.error('Not authenticated:', err);
@@ -50,15 +73,15 @@ function CompletedTraditions() {
 
   return (
     <DashboardShell user={user} onLogout={handleLogout}>
-      <section className="traditions-grid" id="completed-traditions">
-        <h2>Completed Traditions</h2>
+      <section className="completed-page" id="completed-traditions">
+        <h2 className="completed-page__title">Completed Traditions</h2>
         {completedTraditions.length === 0 ? (
-          <p className="traditions-empty">You haven’t completed any traditions yet.</p>
+          <p className="completed-page__empty">You haven’t completed any traditions yet.</p>
         ) : (
-          <div className="completed-list">
+          <div className="completed-page__list">
             {completedTraditions.map((item, index) => (
-              <article key={item.tradition_id ?? item.id ?? index} className="tradition-card">
-                <div className="tradition-card__body">
+              <article key={item.tradition_id ?? item.id ?? index} className="completed-page__card">
+                <div className="completed-page__card-body">
                   <h3>{item.title || 'Untitled Tradition'}</h3>
                   {item.description && <p>{item.description}</p>}
                 </div>

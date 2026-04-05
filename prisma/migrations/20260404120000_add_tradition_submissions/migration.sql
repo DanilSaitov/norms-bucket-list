@@ -1,0 +1,20 @@
+-- Create SubmissionStatus enum
+CREATE TYPE "SubmissionStatus" AS ENUM ('pending', 'approved', 'denied');
+
+-- Create tradition_submissions table
+CREATE TABLE "tradition_submissions" (
+    "submission_id" SERIAL PRIMARY KEY,
+    "user_id" INTEGER NOT NULL,
+    "tradition_id" INTEGER NOT NULL,
+    "image_submission" TEXT NOT NULL,
+    "text_submission" TEXT NOT NULL,
+    "approved" BOOLEAN,
+    "status" "SubmissionStatus" NOT NULL DEFAULT 'pending',
+    "submitted_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "admin_comment" TEXT,
+    CONSTRAINT "tradition_submissions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("user_id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "tradition_submissions_tradition_id_fkey" FOREIGN KEY ("tradition_id") REFERENCES "traditions"("tradition_id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS "tradition_submissions_user_id_idx" ON "tradition_submissions"("user_id");
+CREATE INDEX IF NOT EXISTS "tradition_submissions_tradition_id_idx" ON "tradition_submissions"("tradition_id");
