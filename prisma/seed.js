@@ -5,7 +5,7 @@ async function main() {
   const traditionsToSeed = [
     {
       title: 'Football game',
-      description: 'Go to a home ECU football game and join the Purple-Gold game day energy in Dowdy-Ficklen Stadium. Wear school colors, learn the fight song, and cheer with other students in the Pirates section.',
+      description: 'Go to a home UNCC football game and join the Green-Gold game day energy! Wear school colors, learn the fight song, and cheer with other students in the Niners student section.',
       category: 'sports',
       image: '/uploads/traditions/footballLogo.jpg',
       intermittent: false,
@@ -14,7 +14,7 @@ async function main() {
     },
     {
       title: 'Join a club',
-      description: 'Attend the involvement fair or browse student organizations, then join at least one club that matches your interests. Go to a meeting and introduce yourself to start building your ECU community early.',
+      description: 'Attend the involvement fair or browse student organizations, then join at least one club that matches your interests. Go to a meeting and introduce yourself to start building your UNCC community early.',
       category: 'social',
       image: '/uploads/traditions/clubFair.jpg',
       intermittent: false,
