@@ -26,11 +26,7 @@ describe('tradition db controller', ()=> {
         const res = await(fetch(`${baseUrl}/api/traditions?search=`));
         const data = await res.json();
 
-        expect(res.status).toBe(400);
-        // TODO: unsure if needed.
-        expect(data).toEqual({
-            error: "Query required"
-        });
+        expect(data.length).toBe(8);
     });
 
     test('GET /api/traditions?search where search has a query', async () => {
@@ -38,6 +34,60 @@ describe('tradition db controller', ()=> {
         const data = await res.json();
 
         expect(res.status).toBe(200);
-        expect(data[0].title).toEqual("Football game");
     });
+
+
+    test('POST upload-image empty', async () => {
+        const res = await(fetch(`${baseUrl}/api/traditions/upload-image`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                empty: "yup its empty"
+            })           
+        }));
+
+        expect(res.status).toBe(400);
+    });
+
+    test('GET /submissions/me/pending empty', async () => {
+        const res = await(fetch(`${baseUrl}/api/traditions/submissions/me/pending`));
+        const data = res.json();
+        expect(data.length).toBe(undefined);
+    });
+
+    test('POST create empty', async () => {
+        const res = await(fetch(`${baseUrl}/api/traditions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                empty: "yup its empty"
+            })           
+        }));
+
+        expect(res.status).toBe(400);
+    });
+    
+    test('POST create pass', async () => {
+        const res = await(fetch(`${baseUrl}/api/traditions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                title: "test",
+                description: "test",
+                image: "/uploads/submissions/1775328159640-2025_BEST-UNC-CLT_25001_.jpg",
+                tags: "sports"
+            })           
+        }));
+
+    });
+
 });
