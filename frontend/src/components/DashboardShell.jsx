@@ -39,7 +39,13 @@ function DashboardShell({ user, onLogout, children }) {
           </Link>
 
           <Link to="/profile" className="profile-button" onClick={handleNavAction}>
-            <span className="profile-avatar">{userInitial}</span>
+            <span className="profile-avatar">
+              {user?.profile_image_url ? (
+                <img src={user.profile_image_url} alt="" className="profile-avatar__img" />
+              ) : (
+                userInitial
+              )}
+            </span>
             <span className="profile-copy">
               <span className="profile-name">{displayName}</span>
               <span className="profile-year">{classYear}</span>
@@ -65,7 +71,7 @@ function DashboardShell({ user, onLogout, children }) {
             <Link to="/pending" className="home-nav-link" onClick={handleNavAction}>Pending Traditions</Link>
             <a href="#notifications" className="home-nav-link" onClick={handleNavAction}>Notifications</a>
             <a href="#feedback" className="home-nav-link" onClick={handleNavAction}>Feedback</a>
-            <a href="#about" className="home-nav-link" onClick={handleNavAction}>About</a>
+            <Link to="/help" className="home-nav-link" onClick={handleNavAction}>Help</Link>
           </nav>
 
           <button

@@ -210,9 +210,156 @@ async function getCurrentUser(req, res) {
   }
 }
 
+/**
+ * PATCH_PROFILE - Update editable fields for the current user
+ * Body: { first_name?, last_name?, username?, graduation_year?, profile_image_url? | null }
+ */
+async function updateProfile(req, res) {
+  try {
+    const { first_name, last_name, username, graduation_year, profile_image_url } = req.body;
+    const userId = req.userId;
+
+    const existing = await prisma.user.findUnique({
+      where: { user_id: userId },
+      select: { username: true },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const data = {};
+
+    if (first_name !== undefined) {
+      const f = String(first_name).trim();
+      if (!f || f.length > 32) {
+        return res.status(400).json({ error: 'First name must be 1–32 characters' });
+      }
+      data.first_name = f;
+    }
+
+    if (last_name !== undefined) {
+      const l = String(last_name).trim();
+      if (!l || l.length > 32) {
+        return res.status(400).json({ error: 'Last name must be 1–32 characters' });
+      }
+      data.last_name = l;
+    }
+
+    if (username !== undefined) {
+      const u = String(username).trim();
+      if (u.length < 1 || u.length > 15) {
+        return res.status(400).json({ error: 'Username must be 1–15 characters' });
+      }
+      if (u !== existing.username) {
+        const taken = await prisma.user.findFirst({
+          where: {
+            username: u,
+            user_id: { not: userId },
+          },
+        });
+        if (taken) {
+          return res.status(409).json({ error: 'Username already taken' });
+        }
+      }
+      data.username = u;
+    }
+
+    if (graduation_year !== undefined) {
+      const gy = parseInt(graduation_year, 10);
+      const currentYear = new Date().getFullYear();
+      if (Number.isNaN(gy) || gy < currentYear || gy > currentYear + 10) {
+        return res.status(400).json({ error: 'Please enter a valid graduation year' });
+      }
+      data.graduation_year = gy;
+    }
+
+    if (profile_image_url !== undefined) {
+      if (profile_image_url === null || profile_image_url === '') {
+        data.profile_image_url = null;
+      } else {
+        const s = String(profile_image_url);
+        if (s.length > 2_000_000) {
+          return res.status(400).json({ error: 'Profile image data is too large' });
+        }
+        data.profile_image_url = s;
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: 'No changes provided' });
+    }
+
+    const user = await prisma.user.update({
+      where: { user_id: userId },
+      data,
+      select: {
+        user_id: true,
+        username: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        role: true,
+        graduation_year: true,
+        profile_image_url: true,
+      },
+    });
+
+    res.json({ message: 'Profile updated', user });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
+
+/**
+ * CHANGE_PASSWORD - Update password for the current user
+ * Body: { current_password, new_password }
+ */
+async function changePassword(req, res) {
+  try {
+    const { current_password, new_password } = req.body;
+
+    if (!current_password || !new_password) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+
+    if (new_password.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    const record = await prisma.user.findUnique({
+      where: { user_id: req.userId },
+      select: { password: true },
+    });
+
+    if (!record) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const valid = await bcrypt.compare(current_password, record.password);
+    if (!valid) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+
+    const hashed = await bcrypt.hash(new_password, 10);
+    await prisma.user.update({
+      where: { user_id: req.userId },
+      data: { password: hashed },
+    });
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
+
 module.exports = {
   signup,
   login,
   logout,
-  getCurrentUser
+  getCurrentUser,
+  updateProfile,
+  changePassword,
 };

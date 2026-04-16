@@ -1,0 +1,218 @@
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 20px;
+  color: #00703c;
+  background-color: #f5f5f5;
+}
+
+.help-page {
+  max-width: 800px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.help-page__header {
+  margin-bottom: 1.5rem;
+}
+
+.help-page__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0f0f0f;
+  letter-spacing: -0.02em;
+}
+
+.help-page__intro {
+  margin: 0;
+  color: #555;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+/* jQuery UI accordion — theme to match UNCC green shell */
+.help-faq-accordion {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #cfe8d8;
+  box-shadow: 0 8px 28px rgba(4, 106, 56, 0.12);
+}
+
+.help-page .help-faq-accordion .ui-accordion-header {
+  margin: 0;
+  padding: 0.95rem 1.1rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-family: inherit;
+  background: linear-gradient(180deg, #0a7a45 0%, #046a38 55%, #035c30 100%);
+  color: #fff !important;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.help-page .help-faq-accordion .ui-accordion-header.ui-state-hover {
+  background: linear-gradient(180deg, #0c8c4f 0%, #057a42 55%, #046a32 100%);
+}
+
+.help-page .help-faq-accordion .ui-accordion-header.ui-state-active {
+  background: linear-gradient(180deg, #065f33 0%, #054528 100%);
+}
+
+.help-page .help-faq-accordion .ui-accordion-header .ui-accordion-header-icon {
+  filter: brightness(0) invert(1);
+}
+
+.help-page .help-faq-accordion .ui-accordion-content {
+  padding: 1rem 1.15rem 1.2rem;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: #333;
+  background: #fafdfb;
+  border: none;
+  border-top: 1px solid #e0efe6;
+}
+
+.help-page .help-faq-accordion .ui-accordion-content p {
+  margin: 0;
+}
+
+.help-page .help-faq-accordion .ui-accordion-content p + p {
+  margin-top: 0.75rem;
+}
+
+.help-page .help-faq-accordion .ui-accordion-content strong {
+  color: #046a38;
+  font-weight: 700;
+}
+
+.help-report-card {
+  margin-top: 1.25rem;
+  background: #fff;
+  border: 1px solid #cfe8d8;
+  border-radius: 14px;
+  padding: 1rem 1.1rem 1.2rem;
+  box-shadow: 0 8px 28px rgba(4, 106, 56, 0.12);
+}
+
+.help-report-card__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.2rem;
+  color: #046a38;
+  font-weight: 800;
+}
+
+.help-report-card__intro {
+  margin: 0 0 0.9rem;
+  color: #555;
+}
+
+.help-report-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.help-report-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.help-report-field span {
+  font-weight: 700;
+  color: #333;
+  font-size: 0.92rem;
+}
+
+.help-report-field select,
+.help-report-field textarea {
+  width: 100%;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.96rem;
+  font-family: inherit;
+}
+
+.help-report-field select:focus,
+.help-report-field textarea:focus {
+  outline: none;
+  border-color: #046a38;
+}
+
+.help-report-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.help-report-submit {
+  justify-self: end;
+  border: none;
+  border-radius: 10px;
+  background: #046a38;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+}
+
+.help-report-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.help-report-message {
+  margin: 0;
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  font-weight: 600;
+}
+
+.help-report-message--error {
+  background: #ffebee;
+  color: #b71c1c;
+  border: 1px solid #ffcdd2;
+}
+
+.help-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 1rem;
+}
+
+.help-popup {
+  width: min(420px, 100%);
+  background: #fff;
+  border-radius: 14px;
+  padding: 1rem 1.1rem 1.15rem;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.25);
+  border-top: 6px solid #046a38;
+}
+
+.help-popup h3 {
+  margin: 0 0 0.4rem;
+  color: #046a38;
+  font-size: 1.15rem;
+}
+
+.help-popup p {
+  margin: 0 0 0.9rem;
+  color: #333;
+}
+
+.help-popup-close {
+  border: none;
+  border-radius: 10px;
+  background: #046a38;
+  color: #fff;
+  font-weight: 700;
+  padding: 0.6rem 0.95rem;
+  cursor: pointer;
+}
