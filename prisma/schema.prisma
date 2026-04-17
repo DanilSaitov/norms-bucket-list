@@ -31,6 +31,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ------------------------ REPORTS
+enum Issue_type {
+    traditions
+    notifications
+    profile
+    performance
+    access
+    other
+}
+
+model User_Reports {
+    report_id    Int         @id @default(autoincrement())
+    user         User        @relation(fields: [user_id], references: [user_id])
+    issue_type   Issue_type  @default(other)
+    description  String
+}
+
 // Enum for user roles
 enum Role {
   student
