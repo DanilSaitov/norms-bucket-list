@@ -9,6 +9,7 @@ import Landing from './pages/Landing';
 import Profile from './pages/Profile';
 import CompletedTraditions from './pages/CompletedTraditions';
 import PendingTraditions from './pages/PendingTraditions';
+import Help from './pages/Help';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Route path="/pending" element={<PendingTraditions />} />
         <Route path="/completed" element={<CompletedTraditions />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/help" element={<Help />} />
       </Routes>
     </Router>
   );

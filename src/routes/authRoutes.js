@@ -41,4 +41,16 @@ router.post('/logout', authController.logout);
  */
 router.get('/me', authenticate, authController.getCurrentUser);
 
+/**
+ * PATCH /api/auth/me
+ * Update profile fields for the current user (requires auth)
+ */
+router.patch('/me', authenticate, authController.updateProfile);
+
+/**
+ * PATCH /api/auth/password
+ * Change password (requires auth)
+ */
+router.patch('/password', authenticate, authController.changePassword);
+
 module.exports = router;
