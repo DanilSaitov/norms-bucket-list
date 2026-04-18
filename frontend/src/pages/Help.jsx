@@ -88,6 +88,11 @@ function Help() {
         type: 'error',
         text: 'Please add a few more details (at least 10 characters).',
       });
+
+    // place api call here.
+    // const response axios.post(`${API}/issues`, stuff);
+    
+
       return;
     }
 
