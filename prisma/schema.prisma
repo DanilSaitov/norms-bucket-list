@@ -31,75 +31,75 @@ enum NotificationType {
 }
 
 model Tradition_Submissions {
-  submission_id     Int        @id @default(autoincrement())
-  user              User       @relation(fields: [user_id], references: [user_id])
-  user_id           Int
-  tradition         Traditions @relation(fields: [tradition_id], references: [tradition_id])
-  tradition_id      Int
-  image_submission  String     // Path or URL to uploaded image
-  text_submission   String     // User's text entry
-  approved          Boolean?   // Null if not graded yet, true/false if graded
-  status            SubmissionStatus @default(pending)
-  submitted_at      DateTime   @default(now())
-  admin_comment     String?
+  submission_id    Int              @id @default(autoincrement())
+  user             User             @relation(fields: [user_id], references: [user_id])
+  user_id          Int
+  tradition        Traditions       @relation(fields: [tradition_id], references: [tradition_id])
+  tradition_id     Int
+  image_submission String // Path or URL to uploaded image
+  text_submission  String // User's text entry
+  approved         Boolean? // Null if not graded yet, true/false if graded
+  status           SubmissionStatus @default(pending)
+  submitted_at     DateTime         @default(now())
+  admin_comment    String?
 
-  @@map("tradition_submissions")
   @@index([user_id])
   @@index([tradition_id])
+  @@map("tradition_submissions")
 }
 
 model Tradition_Suggestions {
-  suggestion_id     Int              @id @default(autoincrement())
-  user              User             @relation(fields: [user_id], references: [user_id])
-  user_id           Int
-  title             String
-  description       String
-  category          Category
-  image             String           // Path or URL to suggested image
-  intermittent      Boolean          @default(false)
-  tags              String?          // Comma-separated tag suggestions
-  status            SuggestionStatus @default(pending)
-  admin_comment     String?
-  submitted_at      DateTime         @default(now())
-  reviewed_at       DateTime?
-  reviewed_by       Int?             // Admin user_id who reviewed it
+  suggestion_id Int              @id @default(autoincrement())
+  user          User             @relation(fields: [user_id], references: [user_id])
+  user_id       Int
+  title         String
+  description   String
+  category      Category
+  image         String // Path or URL to suggested image
+  intermittent  Boolean          @default(false)
+  tags          String? // Comma-separated tag suggestions
+  status        SuggestionStatus @default(pending)
+  admin_comment String?
+  submitted_at  DateTime         @default(now())
+  reviewed_at   DateTime?
+  reviewed_by   Int? // Admin user_id who reviewed it
 
-  @@map("tradition_suggestions")
   @@index([user_id])
   @@index([status])
+  @@map("tradition_suggestions")
 }
 
 model Feedback {
-  feedback_id       Int             @id @default(autoincrement())
-  user              User            @relation(fields: [user_id], references: [user_id])
-  user_id           Int
-  subject           String
-  message           String
-  status            FeedbackStatus  @default(unread)
-  admin_response    String?
-  submitted_at      DateTime        @default(now())
-  responded_at      DateTime?
+  feedback_id    Int            @id @default(autoincrement())
+  user           User           @relation(fields: [user_id], references: [user_id])
+  user_id        Int
+  subject        String
+  message        String
+  status         FeedbackStatus @default(unread)
+  admin_response String?
+  submitted_at   DateTime       @default(now())
+  responded_at   DateTime?
 
-  @@map("feedback")
   @@index([user_id])
   @@index([status])
+  @@map("feedback")
 }
 
 model Notification {
-  notification_id   Int               @id @default(autoincrement())
-  user              User              @relation(fields: [user_id], references: [user_id])
-  user_id           Int
-  type              NotificationType
-  title             String
-  message           String
-  related_id        Int?              // ID of related record (submission, suggestion, feedback)
-  is_read           Boolean           @default(false)
-  created_at        DateTime          @default(now())
+  notification_id Int              @id @default(autoincrement())
+  user            User             @relation(fields: [user_id], references: [user_id])
+  user_id         Int
+  type            NotificationType
+  title           String
+  message         String
+  related_id      Int? // ID of related record (submission, suggestion, feedback)
+  is_read         Boolean          @default(false)
+  created_at      DateTime         @default(now())
 
-  @@map("notifications")
   @@index([user_id])
   @@index([is_read])
   @@index([created_at])
+  @@map("notifications")
 }
 
 generator client {
@@ -113,23 +113,23 @@ datasource db {
 
 // ------------------------ REPORTS
 enum Issue_type {
-    traditions
-    notifications
-    profile
-    performance
-    access
-    other
+  traditions
+  notifications
+  profile
+  performance
+  access
+  other
 }
 
 model User_Reports {
-    report_id    Int         @id @default(autoincrement())
-    user         User        @relation(fields: [user_id], references: [user_id])
-    issue_type   Issue_type  @default(other)
-    description  String
+  report_id   Int        @id @default(autoincrement())
+  user_id     Int
+  user        User       @relation(fields: [user_id], references: [user_id])
+  issue_type  Issue_type @default(other)
+  description String
 
-    @@map("user_reports")
+  @@map("user_reports")
 }
-
 
 // Enum for user roles
 enum Role {
@@ -140,71 +140,71 @@ enum Role {
 
 // Enum for traditions category
 enum Category {
-    sports
-    academic
-    social
+  sports
+  academic
+  social
 }
 
 //For the tags table
 enum Tags_enum {
-    sports
-    academic
-    social
-    club
-    engagement
-    landmark
-    food
-    event
-    oncampus
-    offcampus
-    datesensitive
-    misc
+  sports
+  academic
+  social
+  club
+  engagement
+  landmark
+  food
+  event
+  oncampus
+  offcampus
+  datesensitive
+  misc
 }
 
 model Tag {
-    tag_id              Int     @id @default(autoincrement())
-    tag             Tags_enum
-    tradition_id    Int
-    tradition       Traditions @relation(fields: [tradition_id], references: [tradition_id])
+  tag_id       Int        @id @default(autoincrement())
+  tag          Tags_enum
+  tradition_id Int
+  tradition    Traditions @relation(fields: [tradition_id], references: [tradition_id])
 
   @@unique([tradition_id, tag])
   @@index([tag])
-
-    @@map("tags")
+  @@map("tags")
 }
 
 // Users table
 model User {
-  user_id            Int      @id @default(autoincrement())
-  username           String   @unique @db.VarChar(15)
-  first_name         String   @db.VarChar(32)
-  last_name          String   @db.VarChar(32)
-  email              String   @unique @db.VarChar(255)
-  password           String   @db.VarChar(255) // Will be hashed/salted
-  role               Role     @default(student)
-  profile_image_url  String?  // Optional field, nullable
-  graduation_year    Int      @db.Integer
-  created_at         DateTime @default(now())
-  updated_at         DateTime @updatedAt
-  submissions        Tradition_Submissions[]
-  suggestions        Tradition_Suggestions[]
-  feedback           Feedback[]
-  notifications      Notification[]
+  user_id           Int                     @id @default(autoincrement())
+  username          String                  @unique @db.VarChar(15)
+  first_name        String                  @db.VarChar(32)
+  last_name         String                  @db.VarChar(32)
+  email             String                  @unique @db.VarChar(255)
+  password          String                  @db.VarChar(255) // Will be hashed/salted
+  role              Role                    @default(student)
+  profile_image_url String? // Optional field, nullable
+  graduation_year   Int                     @db.Integer
+  created_at        DateTime                @default(now())
+  updated_at        DateTime                @updatedAt
+  submissions       Tradition_Submissions[]
+  suggestions       Tradition_Suggestions[]
+  feedback          Feedback[]
+  notifications     Notification[]
+  userReports       User_Reports[]
 
   @@map("users")
 }
 
 model Traditions {
-  tradition_id Int @id @default(autoincrement())
-  title String
-  description String
-  category Category
-  image String // URL or path to the tradition image
-  intermittent Boolean @default(false)
-  is_active Boolean
-  created_at DateTime @default(now())
-  tags Tag[]
-  submissions Tradition_Submissions[]
+  tradition_id Int                     @id @default(autoincrement())
+  title        String
+  description  String
+  category     Category
+  image        String // URL or path to the tradition image
+  intermittent Boolean                 @default(false)
+  is_active    Boolean
+  created_at   DateTime                @default(now())
+  tags         Tag[]
+  submissions  Tradition_Submissions[]
 
-    @@map("traditions")
+  @@map("traditions")
 }
