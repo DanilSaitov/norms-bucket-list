@@ -1,5 +1,5 @@
-// Authentication Routes
-// Defines all authentication API endpoints
+// Traditions DB routes
+// Defines all traditions related API endpoints
 
 const express = require('express');
 const router = express.Router();

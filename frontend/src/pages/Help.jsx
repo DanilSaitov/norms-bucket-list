@@ -90,7 +90,7 @@ function Help() {
       });
 
     // place api call here.
-    // const response axios.post(`${API}/issues`, stuff);
+    // const response axios.post(`${API}/reports`, stuff);
     
 
       return;

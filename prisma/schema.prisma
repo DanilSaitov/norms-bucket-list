@@ -126,7 +126,10 @@ model User_Reports {
     user         User        @relation(fields: [user_id], references: [user_id])
     issue_type   Issue_type  @default(other)
     description  String
+
+    @@map("user_reports")
 }
+
 
 // Enum for user roles
 enum Role {
