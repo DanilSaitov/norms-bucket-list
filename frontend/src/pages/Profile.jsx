@@ -5,6 +5,7 @@ import DashboardShell from '../components/DashboardShell';
 import './Profile.css';
 
 const API = 'http://localhost:3000/api';
+const BACKEND = API.replace('/api', '');
 const MAX_AVATAR_BYTES = 800 * 1024;
 
 function Profile() {
@@ -16,6 +17,8 @@ function Profile() {
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [graduationYear, setGraduationYear] = useState('');
+  const [submissionImages, setSubmissionImages] = useState([]);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -28,6 +31,11 @@ function Profile() {
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+
+  const resolveSubmissionImage = (src) => {
+    if (!src) return src;
+    return src.startsWith('/') ? `${BACKEND}${src}` : src;
+  };
 
   const loadUser = useCallback(async () => {
     const response = await axios.get(`${API}/auth/me`, { withCredentials: true });
@@ -42,15 +50,28 @@ function Profile() {
     return u;
   }, []);
 
+  const loadSubmissionImages = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/traditions/submissions/me`, {
+        withCredentials: true,
+      });
+      setSubmissionImages(Array.isArray(response.data.submissions) ? response.data.submissions : []);
+    } catch (err) {
+      console.error('Error loading submitted images:', err);
+      setSubmissionImages([]);
+    }
+  }, []);
+
   const checkAuthentication = useCallback(async () => {
     try {
       await loadUser();
+      await loadSubmissionImages();
       setLoading(false);
     } catch (err) {
       console.error('Not authenticated:', err);
       navigate('/login');
     }
-  }, [navigate, loadUser]);
+  }, [navigate, loadUser, loadSubmissionImages]);
 
   useEffect(() => {
     checkAuthentication();
@@ -290,6 +311,50 @@ function Profile() {
           </div>
         </form>
 
+        <section className="profile-card profile-submission-images">
+          <h2 className="profile-card__title">Submitted images</h2>
+          <p className="profile-hint">Click any image to view a larger version.</p>
+
+          {submissionImages.length === 0 ? (
+            <p className="profile-empty">You haven't submitted any images yet.</p>
+          ) : (
+            <div className="profile-image-gallery">
+              {submissionImages.map((submission) => (
+                <div
+                  key={submission.submission_id}
+                  className="profile-image-item"
+                  onClick={() => setSelectedSubmission(submission)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedSubmission(submission);
+                    }
+                  }}
+                >
+                  <img
+                    src={resolveSubmissionImage(submission.image_submission)}
+                    alt={submission.tradition?.title || 'Submission image'}
+                    className="profile-image-item__img"
+                  />
+                  <div className="profile-image-item__overlay">
+                    <h4 className="profile-image-item__title">
+                      {submission.tradition?.title || 'Unknown Tradition'}
+                    </h4>
+                    <p className={`profile-image-item__status profile-image-item__status--${submission.status.toLowerCase()}`}>
+                      {submission.status}
+                    </p>
+                    <p className="profile-image-item__date">
+                      {new Date(submission.submitted_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
         <form className="profile-card" onSubmit={handleChangePassword}>
           <h2 className="profile-card__title">Change password</h2>
 
@@ -338,6 +403,40 @@ function Profile() {
             </button>
           </div>
         </form>
+
+        {selectedSubmission && (
+          <div className="profile-image-modal-overlay" onClick={() => setSelectedSubmission(null)}>
+            <div className="profile-image-modal" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="profile-image-modal__close"
+                onClick={() => setSelectedSubmission(null)}
+                aria-label="Close image preview"
+              >
+                ×
+              </button>
+              <div className="profile-image-modal__content">
+                <img
+                  src={resolveSubmissionImage(selectedSubmission.image_submission)}
+                  alt={selectedSubmission.tradition?.title || 'Selected submission image'}
+                  className="profile-image-modal__img"
+                />
+                <div className="profile-image-modal__meta">
+                  <h3>{selectedSubmission.tradition?.title || 'Submission image'}</h3>
+                  <p>
+                    <span className={`status-badge status-badge--${selectedSubmission.status.toLowerCase()}`}>
+                      {selectedSubmission.status}
+                    </span>
+                  </p>
+                  <p>Submitted: {new Date(selectedSubmission.submitted_at).toLocaleDateString()}</p>
+                  {selectedSubmission.approved && (
+                    <p>Approved: {new Date(selectedSubmission.approved).toLocaleDateString()}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardShell>
   );
