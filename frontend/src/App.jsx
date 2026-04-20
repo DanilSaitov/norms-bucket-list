@@ -10,6 +10,11 @@ import Profile from './pages/Profile';
 import CompletedTraditions from './pages/CompletedTraditions';
 import PendingTraditions from './pages/PendingTraditions';
 import Help from './pages/Help';
+import Feedback from './pages/Feedback';
+import AdminFeedback from './pages/AdminFeedback';
+import AdminSuggestions from './pages/AdminSuggestions';
+import SuggestTradition from './pages/SuggestTradition';
+import Notifications from './pages/Notifications';
 
 function App() {
   return (
@@ -27,7 +32,12 @@ function App() {
         <Route path="/pending" element={<PendingTraditions />} />
         <Route path="/completed" element={<CompletedTraditions />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/suggest" element={<SuggestTradition />} />
+        <Route path="/admin/suggestions" element={<AdminSuggestions />} />
         <Route path="/help" element={<Help />} />
+        <Route path="/feedback" element={<Feedback />} />
+        <Route path="/admin/feedback" element={<AdminFeedback />} />
+        <Route path="/notifications" element={<Notifications />} />
       </Routes>
     </Router>
   );

@@ -69,8 +69,12 @@ function DashboardShell({ user, onLogout, children }) {
           <nav className="home-nav">
             <Link to="/completed" className="home-nav-link" onClick={handleNavAction}>Completed Traditions</Link>
             <Link to="/pending" className="home-nav-link" onClick={handleNavAction}>Pending Traditions</Link>
-            <a href="#notifications" className="home-nav-link" onClick={handleNavAction}>Notifications</a>
-            <a href="#feedback" className="home-nav-link" onClick={handleNavAction}>Feedback</a>
+            <Link to="/suggest" className="home-nav-link" onClick={handleNavAction}>Suggest Tradition</Link>
+            {(user?.role === 'admin' || user?.role === 'staff') && (
+              <Link to="/admin/suggestions" className="home-nav-link" onClick={handleNavAction}>Manage Suggestions</Link>
+            )}
+            <Link to="/notifications" className="home-nav-link" onClick={handleNavAction}>Notifications</Link>
+            <Link to="/feedback" className="home-nav-link" onClick={handleNavAction}>Feedback</Link>
             <Link to="/help" className="home-nav-link" onClick={handleNavAction}>Help</Link>
           </nav>
 
