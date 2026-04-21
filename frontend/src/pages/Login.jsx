@@ -42,8 +42,14 @@ function Login() {
 
       console.log('Login successful:', response.data);
       
-      // Redirect to home page
-      navigate('/home');
+      const role = response.data?.user?.role;
+      if (role === 'admin') {
+        navigate('/admin');
+      } else if (role === 'staff') {
+        navigate('/staff');
+      } else {
+        navigate('/home');
+      }
 
     } catch (err) {
       // Display error message from server
