@@ -11,13 +11,15 @@ const port = process.env.PORT || 3000;
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const dbRoutes = require('./routes/traditionsDbRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Middleware
 // CORS - Allow frontend dev servers on localhost to communicate with backend
 app.use(cors({
 	origin: (origin, callback) => {
-		// Allow non-browser tools (no Origin header) and localhost Vite ports.
-		if (!origin || /^http:\/\/localhost:\d+$/.test(origin)) {
+		// Allow non-browser tools (no Origin header) and localhost/127.0.0.1 dev ports.
+		if (!origin || /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
 			return callback(null, true);
 		}
 
@@ -27,7 +29,7 @@ app.use(cors({
 }));
 
 // Parse JSON request bodies (for POST requests)
-app.use(express.json());
+app.use(express.json({ limit: '4mb' }));
 
 // Parse cookies from requests
 app.use(cookieParser());
@@ -45,6 +47,8 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
 app.use('/api/auth', authRoutes);
 
 app.use('/api/traditions', dbRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Test route
 app.get('/', (req, res) => res.send('Hello from norms-bucket-list'));

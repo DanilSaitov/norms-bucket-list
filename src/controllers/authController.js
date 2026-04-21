@@ -72,9 +72,10 @@ async function signup(req, res) {
 
     // Send token in HTTP-only cookie (more secure than localStorage)
     res.cookie('auth_token', token, {
-      httpOnly: true, // Prevents JavaScript access (XSS protection)
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-      sameSite: 'lax' // CSRF protection
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: 'none',
+      secure: process.env.NODE_ENV === 'production'
     });
 
     // Return success (don't send password!)
@@ -142,7 +143,8 @@ async function login(req, res) {
     res.cookie('auth_token', token, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'lax'
+      sameSite: 'none',
+      secure: process.env.NODE_ENV === 'production'
     });
 
     // Return success

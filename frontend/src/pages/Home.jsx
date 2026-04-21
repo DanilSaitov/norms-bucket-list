@@ -286,8 +286,8 @@ function Home() {
       </section>
 
       {isDetailsOpen && activeTradition && (
-        <div className="home-modal-backdrop" onClick={closeDetails}>
-          <div className="home-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="home-modal-backdrop" onClick={closeDetails} data-testid="tradition-modal-backdrop">
+          <div className="home-modal" onClick={(e) => e.stopPropagation()} data-testid="tradition-modal-content">
             <button type="button" className="home-modal-close" onClick={closeDetails}>
               ×
             </button>

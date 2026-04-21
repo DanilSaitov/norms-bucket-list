@@ -5,6 +5,31 @@ enum SubmissionStatus {
   denied
 }
 
+// Tradition suggestion status enum
+enum SuggestionStatus {
+  pending
+  approved
+  denied
+  draft
+}
+
+// Feedback status enum
+enum FeedbackStatus {
+  unread
+  read
+  responded
+}
+
+// Notification type enum
+enum NotificationType {
+  submission_approved
+  submission_denied
+  suggestion_approved
+  suggestion_denied
+  feedback_responded
+  system_announcement
+}
+
 model Tradition_Submissions {
   submission_id     Int        @id @default(autoincrement())
   user              User       @relation(fields: [user_id], references: [user_id])
@@ -22,6 +47,61 @@ model Tradition_Submissions {
   @@index([user_id])
   @@index([tradition_id])
 }
+
+model Tradition_Suggestions {
+  suggestion_id     Int              @id @default(autoincrement())
+  user              User             @relation(fields: [user_id], references: [user_id])
+  user_id           Int
+  title             String
+  description       String
+  category          Category
+  image             String           // Path or URL to suggested image
+  intermittent      Boolean          @default(false)
+  tags              String?          // Comma-separated tag suggestions
+  status            SuggestionStatus @default(pending)
+  admin_comment     String?
+  submitted_at      DateTime         @default(now())
+  reviewed_at       DateTime?
+  reviewed_by       Int?             // Admin user_id who reviewed it
+
+  @@map("tradition_suggestions")
+  @@index([user_id])
+  @@index([status])
+}
+
+model Feedback {
+  feedback_id       Int             @id @default(autoincrement())
+  user              User            @relation(fields: [user_id], references: [user_id])
+  user_id           Int
+  subject           String
+  message           String
+  status            FeedbackStatus  @default(unread)
+  admin_response    String?
+  submitted_at      DateTime        @default(now())
+  responded_at      DateTime?
+
+  @@map("feedback")
+  @@index([user_id])
+  @@index([status])
+}
+
+model Notification {
+  notification_id   Int               @id @default(autoincrement())
+  user              User              @relation(fields: [user_id], references: [user_id])
+  user_id           Int
+  type              NotificationType
+  title             String
+  message           String
+  related_id        Int?              // ID of related record (submission, suggestion, feedback)
+  is_read           Boolean           @default(false)
+  created_at        DateTime          @default(now())
+
+  @@map("notifications")
+  @@index([user_id])
+  @@index([is_read])
+  @@index([created_at])
+}
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -87,6 +167,9 @@ model User {
   created_at         DateTime @default(now())
   updated_at         DateTime @updatedAt
   submissions        Tradition_Submissions[]
+  suggestions        Tradition_Suggestions[]
+  feedback           Feedback[]
+  notifications      Notification[]
 
   @@map("users")
 }

@@ -341,6 +341,504 @@ async function getMyPendingSubmissions(req, res) {
   }
 }
 
+async function getMySubmissions(req, res) {
+  try {
+    const submissionModel = getSubmissionModel();
+
+    if (!submissionModel) {
+      throw new Error('Submission model is not available on Prisma client. Run prisma generate and restart the server.');
+    }
+
+    const submissions = await submissionModel.findMany({
+      where: {
+        user_id: req.userId,
+        image_submission: {
+          not: null,
+        },
+      },
+      select: {
+        submission_id: true,
+        status: true,
+        approved: true,
+        submitted_at: true,
+        image_submission: true,
+        tradition: {
+          select: {
+            tradition_id: true,
+            title: true,
+          },
+        },
+      },
+      orderBy: {
+        submitted_at: 'desc',
+      },
+    });
+
+    return res.json({ submissions });
+  } catch (error) {
+    console.error('Get my submissions error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function submitTraditionSuggestion(req, res) {
+  try {
+    const {
+      title,
+      description,
+      category,
+      image,
+      intermittent = false,
+      tags,
+    } = req.body;
+
+    if (!title || !description || !category || !image) {
+      return res.status(400).json({ error: 'title, description, category, and image are required' });
+    }
+
+    const { tags: parsedTags, invalid: invalidTags } = parseTagsInput(tags);
+
+    if (invalidTags.length > 0) {
+      return res.status(400).json({
+        error: 'Invalid tags in request body',
+        invalid_tags: invalidTags,
+        allowed_tags: [...VALID_TAGS],
+      });
+    }
+
+    const suggestion = await prisma.tradition_Suggestions.create({
+      data: {
+        user_id: req.userId,
+        title,
+        description,
+        category,
+        image,
+        intermittent: Boolean(intermittent),
+        tags: parsedTags.length > 0 ? parsedTags.join(',') : null,
+        status: 'pending',
+      },
+    });
+
+    return res.status(201).json({ suggestion });
+  } catch (error) {
+    console.error('Submit tradition suggestion error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function getTraditionSuggestions(req, res) {
+  try {
+    const { status } = req.query;
+    const whereClause = {};
+
+    if (status && ['pending', 'approved', 'denied'].includes(status)) {
+      whereClause.status = status;
+    }
+
+    const suggestions = await prisma.tradition_Suggestions.findMany({
+      where: whereClause,
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            username: true,
+            first_name: true,
+            last_name: true,
+          },
+        },
+      },
+      orderBy: {
+        submitted_at: 'desc',
+      },
+    });
+
+    return res.json({ suggestions });
+  } catch (error) {
+    console.error('Get tradition suggestions error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function reviewTraditionSuggestion(req, res) {
+  try {
+    const suggestionId = Number(req.params.suggestionId);
+    const { action, admin_comment } = req.body;
+
+    if (!['approve', 'deny'].includes(action)) {
+      return res.status(400).json({ error: 'Action must be "approve" or "deny"' });
+    }
+
+    if (!Number.isInteger(suggestionId) || suggestionId <= 0) {
+      return res.status(400).json({ error: 'Invalid suggestion id' });
+    }
+
+    const suggestion = await prisma.tradition_Suggestions.findUnique({
+      where: { suggestion_id: suggestionId },
+    });
+
+    if (!suggestion) {
+      return res.status(404).json({ error: 'Suggestion not found' });
+    }
+
+    if (suggestion.status !== 'pending') {
+      return res.status(400).json({ error: 'Suggestion has already been reviewed' });
+    }
+
+    const updateData = {
+      status: action === 'approve' ? 'approved' : 'denied',
+      admin_comment: admin_comment || null,
+      reviewed_at: new Date(),
+      reviewed_by: req.userId,
+    };
+
+    // If approving, create the actual tradition
+    if (action === 'approve') {
+      const { tags: parsedTags } = parseTagsInput(suggestion.tags);
+
+      await prisma.traditions.create({
+        data: {
+          title: suggestion.title,
+          description: suggestion.description,
+          category: suggestion.category,
+          image: suggestion.image,
+          intermittent: suggestion.intermittent,
+          is_active: true,
+          ...(parsedTags.length > 0
+            ? {
+                tags: {
+                  create: parsedTags.map((tag) => ({ tag })),
+                },
+              }
+            : {}),
+        },
+      });
+    }
+
+    const updatedSuggestion = await prisma.tradition_Suggestions.update({
+      where: { suggestion_id: suggestionId },
+      data: updateData,
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            username: true,
+            first_name: true,
+            last_name: true,
+          },
+        },
+      },
+    });
+
+    // Create notification for the user
+    const notificationType = action === 'approve' ? 'suggestion_approved' : 'suggestion_denied';
+    const notificationTitle = action === 'approve' ? 'Suggestion Approved!' : 'Suggestion Denied';
+    const notificationMessage = action === 'approve'
+      ? `Your suggestion "${suggestion.title}" has been approved and added to the traditions list.`
+      : `Your suggestion "${suggestion.title}" has been denied. ${admin_comment ? `Reason: ${admin_comment}` : ''}`;
+
+    await prisma.notification.create({
+      data: {
+        user_id: suggestion.user_id,
+        type: notificationType,
+        title: notificationTitle,
+        message: notificationMessage,
+        related_id: suggestionId,
+      },
+    });
+
+    return res.json({ suggestion: updatedSuggestion });
+  } catch (error) {
+    console.error('Review tradition suggestion error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function getMySuggestions(req, res) {
+  try {
+    const suggestions = await prisma.tradition_Suggestions.findMany({
+      where: {
+        user_id: req.userId,
+      },
+      select: {
+        suggestion_id: true,
+        title: true,
+        description: true,
+        category: true,
+        status: true,
+        admin_comment: true,
+        submitted_at: true,
+        reviewed_at: true,
+      },
+      orderBy: {
+        submitted_at: 'desc',
+      },
+    });
+
+    return res.json({ suggestions });
+  } catch (error) {
+    console.error('Get my suggestions error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+// Feedback functions
+async function submitFeedback(req, res) {
+  try {
+    const { subject, message } = req.body;
+
+    if (!subject || !message) {
+      return res.status(400).json({ error: 'Subject and message are required' });
+    }
+
+    if (subject.length > 100) {
+      return res.status(400).json({ error: 'Subject must be 100 characters or less' });
+    }
+
+    if (message.length > 1000) {
+      return res.status(400).json({ error: 'Message must be 1000 characters or less' });
+    }
+
+    const feedback = await prisma.feedback.create({
+      data: {
+        user_id: req.userId,
+        subject: subject.trim(),
+        message: message.trim(),
+      },
+    });
+
+    return res.status(201).json({ feedback });
+  } catch (error) {
+    console.error('Submit feedback error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function getMyFeedback(req, res) {
+  try {
+    const feedback = await prisma.feedback.findMany({
+      where: {
+        user_id: req.userId,
+      },
+      select: {
+        feedback_id: true,
+        subject: true,
+        message: true,
+        status: true,
+        admin_response: true,
+        submitted_at: true,
+        responded_at: true,
+      },
+      orderBy: {
+        submitted_at: 'desc',
+      },
+    });
+
+    return res.json({ feedback });
+  } catch (error) {
+    console.error('Get my feedback error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function getAllFeedback(req, res) {
+  try {
+    const feedback = await prisma.feedback.findMany({
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            username: true,
+            first_name: true,
+            last_name: true,
+          },
+        },
+      },
+      orderBy: {
+        submitted_at: 'desc',
+      },
+    });
+
+    return res.json({ feedback });
+  } catch (error) {
+    console.error('Get all feedback error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function respondToFeedback(req, res) {
+  try {
+    const feedbackId = Number(req.params.feedbackId);
+    const { response } = req.body;
+
+    if (!Number.isInteger(feedbackId) || feedbackId <= 0) {
+      return res.status(400).json({ error: 'Invalid feedback id' });
+    }
+
+    if (!response || response.trim().length === 0) {
+      return res.status(400).json({ error: 'Response is required' });
+    }
+
+    if (response.length > 1000) {
+      return res.status(400).json({ error: 'Response must be 1000 characters or less' });
+    }
+
+    const updatedFeedback = await prisma.feedback.update({
+      where: { feedback_id: feedbackId },
+      data: {
+        admin_response: response.trim(),
+        status: 'responded',
+        responded_at: new Date(),
+      },
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            username: true,
+            first_name: true,
+            last_name: true,
+          },
+        },
+      },
+    });
+
+    // Create notification for the user
+    await prisma.notification.create({
+      data: {
+        user_id: updatedFeedback.user_id,
+        type: 'feedback_responded',
+        title: 'Feedback Response',
+        message: `An administrator has responded to your feedback: "${updatedFeedback.subject}"`,
+        related_id: feedbackId,
+      },
+    });
+
+    return res.json({ feedback: updatedFeedback });
+  } catch (error) {
+    console.error('Respond to feedback error:', error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Feedback not found' });
+    }
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function updateFeedbackStatus(req, res) {
+  try {
+    const feedbackId = Number(req.params.feedbackId);
+    const { status } = req.body;
+
+    if (!Number.isInteger(feedbackId) || feedbackId <= 0) {
+      return res.status(400).json({ error: 'Invalid feedback id' });
+    }
+
+    const validStatuses = ['unread', 'read', 'responded'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status. Must be one of: unread, read, responded' });
+    }
+
+    const updatedFeedback = await prisma.feedback.update({
+      where: { feedback_id: feedbackId },
+      data: { status },
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            username: true,
+            first_name: true,
+            last_name: true,
+          },
+        },
+      },
+    });
+
+    return res.json({ feedback: updatedFeedback });
+  } catch (error) {
+    console.error('Update feedback status error:', error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Feedback not found' });
+    }
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+// Notification functions
+async function getUserNotifications(req, res) {
+  try {
+    const notifications = await prisma.notification.findMany({
+      where: { user_id: req.userId },
+      orderBy: { created_at: 'desc' },
+      take: 50, // Limit to last 50 notifications
+    });
+
+    return res.json({ notifications });
+  } catch (error) {
+    console.error('Get user notifications error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function markNotificationAsRead(req, res) {
+  try {
+    const notificationId = Number(req.params.id);
+
+    if (!Number.isInteger(notificationId) || notificationId <= 0) {
+      return res.status(400).json({ error: 'Invalid notification id' });
+    }
+
+    const notification = await prisma.notification.findUnique({
+      where: { notification_id: notificationId },
+    });
+
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+
+    if (notification.user_id !== req.userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const updatedNotification = await prisma.notification.update({
+      where: { notification_id: notificationId },
+      data: { is_read: true },
+    });
+
+    return res.json({ notification: updatedNotification });
+  } catch (error) {
+    console.error('Mark notification as read error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function createNotification(req, res) {
+  try {
+    const { user_id, type, title, message, related_id } = req.body;
+
+    if (!user_id || !type || !title || !message) {
+      return res.status(400).json({ error: 'user_id, type, title, and message are required' });
+    }
+
+    const validTypes = ['submission_approved', 'submission_denied', 'suggestion_approved', 'suggestion_denied', 'feedback_responded', 'system_announcement'];
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ error: 'Invalid notification type' });
+    }
+
+    const notification = await prisma.notification.create({
+      data: {
+        user_id,
+        type,
+        title: title.trim(),
+        message: message.trim(),
+        related_id: related_id ? Number(related_id) : null,
+      },
+    });
+
+    return res.status(201).json({ notification });
+  } catch (error) {
+    console.error('Create notification error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
 module.exports = {
   traditionsSearch,
   createTradition,
@@ -348,4 +846,17 @@ module.exports = {
   getMyTraditionSubmission,
   createTraditionSubmission,
   getMyPendingSubmissions,
+  getMySubmissions,
+  submitTraditionSuggestion,
+  getTraditionSuggestions,
+  reviewTraditionSuggestion,
+  getMySuggestions,
+  submitFeedback,
+  getMyFeedback,
+  getAllFeedback,
+  respondToFeedback,
+  updateFeedbackStatus,
+  getUserNotifications,
+  markNotificationAsRead,
+  createNotification,
 };
