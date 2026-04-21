@@ -6,6 +6,13 @@ const { Tags_enum } = require('@prisma/client');
 const VALID_TAGS = new Set(Object.values(Tags_enum));
 const CATEGORY_TAGS = new Set(['sports', 'academic', 'social']);
 
+const sortByTable = {
+    "azAsc": {title: "asc"},
+    "azDesc": {title: "desc"},
+    "createAsc": {created_at: "asc"},
+    "createDesc": {created_at: "desc"},
+};
+
 function getSubmissionModel() {
   return (
     prisma.tradition_Submissions
@@ -52,6 +59,8 @@ async function traditionsSearch(req, res) {
   const normalizedSearch = normalizeTagValue(search);
   const searchAsTag = VALID_TAGS.has(normalizedSearch) ? normalizedSearch : null;
 
+  const sortBy = req.query.sortBy;
+
   const { tags: tagFilters, invalid: invalidTagFilters } = parseTagsInput(req.query.tags);
 
   if (invalidTagFilters.length > 0) {
@@ -60,6 +69,15 @@ async function traditionsSearch(req, res) {
       invalid_tags: invalidTagFilters,
       allowed_tags: [...VALID_TAGS],
     });
+  }
+
+  // ORDER BY PARSING
+  let orderClause = {
+    created_at: 'desc',
+  };
+
+  if(sortBy) {
+      orderClause = sortByTable[sortBy];
   }
 
   const whereClause = {
@@ -103,9 +121,7 @@ async function traditionsSearch(req, res) {
           },
         },
       },
-      orderBy: {
-        created_at: 'desc',
-      },
+      orderBy: orderClause,
     });
 
     res.json(traditions);

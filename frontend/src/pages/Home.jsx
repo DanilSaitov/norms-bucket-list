@@ -68,6 +68,7 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTags, setSearchTags] = useState('');
+  const [sortBy, setSortBy] = useState('');
   const [traditions, setTraditions] = useState([]);
   const [activeTradition, setActiveTradition] = useState(null);
   const [submissionStatus, setSubmissionStatus] = useState(null);
@@ -123,7 +124,7 @@ function Home() {
     if (!user) return;
     let cancelled = false;
 
-    axios.get(`http://localhost:3000/api/traditions?search=${searchTerm}&tags=${searchTags}`, {
+    axios.get(`http://localhost:3000/api/traditions?search=${searchTerm}&tags=${searchTags}&sortBy=${searchOrder}`, {
       withCredentials: true,
     })
       .then((response) => {
