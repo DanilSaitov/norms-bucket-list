@@ -5,7 +5,10 @@ import '../pages/Home.css';
 
 function DashboardShell({ user, onLogout, children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const classYear = user?.graduation_year ? `Class of ${user.graduation_year}` : 'Class Year N/A';
+  const dashboardPath = user?.role === 'admin' ? '/admin' : user?.role === 'staff' ? '/staff' : '/home';
+  const classYear = user?.role === 'student'
+    ? (user?.graduation_year ? `Class of ${user.graduation_year}` : 'Class Year N/A')
+    : (user?.role ? `${user.role[0].toUpperCase()}${user.role.slice(1)} account` : 'Account');
   const displayName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username || 'User';
   const userInitial = (user?.first_name?.[0] || user?.username?.[0] || 'U').toUpperCase();
 
@@ -30,7 +33,7 @@ function DashboardShell({ user, onLogout, children }) {
     <div className="home-shell">
       <aside className={`home-sidebar ${isMenuOpen ? 'is-open' : ''}`}>
         <div className="home-sidebar-header">
-          <Link to="/home" className="home-logo-link" onClick={handleNavAction} aria-label="Go to home page">
+          <Link to={dashboardPath} className="home-logo-link" onClick={handleNavAction} aria-label="Go to dashboard">
             <img
               src={charlotteLogoWhite}
               alt="UNC Charlotte logo"
@@ -67,15 +70,25 @@ function DashboardShell({ user, onLogout, children }) {
 
         <div className="home-sidebar-menu">
           <nav className="home-nav">
-            <Link to="/completed" className="home-nav-link" onClick={handleNavAction}>Completed Traditions</Link>
-            <Link to="/pending" className="home-nav-link" onClick={handleNavAction}>Pending Traditions</Link>
-            <Link to="/suggest" className="home-nav-link" onClick={handleNavAction}>Suggest Tradition</Link>
-            {(user?.role === 'admin' || user?.role === 'staff') && (
+            {(user?.role === 'admin' || user?.role === 'staff') ? (
+              <>
+                <Link to={dashboardPath} className="home-nav-link" onClick={handleNavAction}>Dashboard</Link>
+                <Link to="/pending" className="home-nav-link" onClick={handleNavAction}>Pending Traditions</Link>
               <Link to="/admin/suggestions" className="home-nav-link" onClick={handleNavAction}>Manage Suggestions</Link>
+                <Link to="/feedback" className="home-nav-link" onClick={handleNavAction}>Feedback</Link>
+                <Link to="/notifications" className="home-nav-link" onClick={handleNavAction}>Notifications</Link>
+                <Link to="/help" className="home-nav-link" onClick={handleNavAction}>Help</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/completed" className="home-nav-link" onClick={handleNavAction}>Completed Traditions</Link>
+                <Link to="/pending" className="home-nav-link" onClick={handleNavAction}>Pending Traditions</Link>
+                <Link to="/suggest" className="home-nav-link" onClick={handleNavAction}>Suggest Tradition</Link>
+                <Link to="/notifications" className="home-nav-link" onClick={handleNavAction}>Notifications</Link>
+                <Link to="/feedback" className="home-nav-link" onClick={handleNavAction}>Feedback</Link>
+                <Link to="/help" className="home-nav-link" onClick={handleNavAction}>Help</Link>
+              </>
             )}
-            <Link to="/notifications" className="home-nav-link" onClick={handleNavAction}>Notifications</Link>
-            <Link to="/feedback" className="home-nav-link" onClick={handleNavAction}>Feedback</Link>
-            <Link to="/help" className="home-nav-link" onClick={handleNavAction}>Help</Link>
           </nav>
 
           <button

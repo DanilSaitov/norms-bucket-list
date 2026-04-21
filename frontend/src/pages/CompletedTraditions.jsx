@@ -4,27 +4,19 @@ import axios from 'axios';
 import DashboardShell from '../components/DashboardShell';
 import './CompletedTraditions.css';
 
-function getStorageKey(userId) {
-  return `completedTraditions-${userId}`;
+const API = 'http://localhost:3000/api';
+
+function resolveTraditionImage(image) {
+  if (!image) return '';
+  if (image.startsWith('http://') || image.startsWith('https://')) return image;
+  return image.startsWith('/') ? `http://localhost:3000${image}` : `http://localhost:3000/${image}`;
 }
 
-function sanitizeCompletedTraditions(items) {
-  if (!Array.isArray(items)) return [];
-
-  const seen = new Set();
-  const cleaned = [];
-
-  items.forEach((item) => {
-    if (!item || typeof item !== 'object') return;
-    const itemId = item.tradition_id ?? item.id;
-    if (itemId == null) return;
-    if (seen.has(itemId)) return;
-
-    seen.add(itemId);
-    cleaned.push(item);
-  });
-
-  return cleaned;
+function formatDateTime(value) {
+  if (!value) return 'N/A';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'N/A';
+  return date.toLocaleString();
 }
 
 function CompletedTraditions() {
@@ -35,16 +27,21 @@ function CompletedTraditions() {
 
   const checkAuthentication = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/auth/me', {
+      const response = await axios.get(`${API}/auth/me`, {
         withCredentials: true,
       });
       const authUser = response.data.user;
+      if (authUser.role !== 'student') {
+        navigate(authUser.role === 'admin' ? '/admin' : '/staff');
+        return;
+      }
       setUser(authUser);
-      const stored = localStorage.getItem(getStorageKey(authUser.user_id));
-      const parsed = stored ? JSON.parse(stored) : [];
-      const sanitized = sanitizeCompletedTraditions(parsed);
-      setCompletedTraditions(sanitized);
-      localStorage.setItem(getStorageKey(authUser.user_id), JSON.stringify(sanitized));
+
+      const completedResponse = await axios.get(`${API}/traditions/submissions/me/completed`, {
+        withCredentials: true,
+      });
+
+      setCompletedTraditions(Array.isArray(completedResponse.data.submissions) ? completedResponse.data.submissions : []);
       setLoading(false);
     } catch (err) {
       console.error('Not authenticated:', err);
@@ -80,10 +77,18 @@ function CompletedTraditions() {
         ) : (
           <div className="completed-page__list">
             {completedTraditions.map((item, index) => (
-              <article key={item.tradition_id ?? item.id ?? index} className="completed-page__card">
+              <article key={item.submission_id ?? item.tradition?.tradition_id ?? index} className="completed-page__card">
+                {item.tradition?.image && (
+                  <div className="completed-page__card-media">
+                    <img src={resolveTraditionImage(item.tradition.image)} alt={item.tradition.title || 'Tradition'} />
+                  </div>
+                )}
                 <div className="completed-page__card-body">
-                  <h3>{item.title || 'Untitled Tradition'}</h3>
-                  {item.description && <p>{item.description}</p>}
+                  <h3>{item.tradition?.title || 'Untitled Tradition'}</h3>
+                  {item.tradition?.description && <p>{item.tradition.description}</p>}
+                  <p><strong>Submitted:</strong> {formatDateTime(item.submitted_at)}</p>
+                  <p><strong>Status:</strong> {item.status}</p>
+                  {item.admin_comment && <p><strong>Staff comment:</strong> {item.admin_comment}</p>}
                 </div>
               </article>
             ))}

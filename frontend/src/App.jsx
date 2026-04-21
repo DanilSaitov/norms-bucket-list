@@ -9,6 +9,7 @@ import Landing from './pages/Landing';
 import Profile from './pages/Profile';
 import CompletedTraditions from './pages/CompletedTraditions';
 import PendingTraditions from './pages/PendingTraditions';
+import StaffDashboard from './pages/StaffDashboard';
 import Help from './pages/Help';
 import Feedback from './pages/Feedback';
 import AdminFeedback from './pages/AdminFeedback';
@@ -29,6 +30,8 @@ function App() {
         
         {/* Protected routes */}
         <Route path="/home" element={<Home />} />
+        <Route path="/staff" element={<StaffDashboard />} />
+        <Route path="/admin" element={<StaffDashboard />} />
         <Route path="/pending" element={<PendingTraditions />} />
         <Route path="/completed" element={<CompletedTraditions />} />
         <Route path="/profile" element={<Profile />} />

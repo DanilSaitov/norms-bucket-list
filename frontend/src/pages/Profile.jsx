@@ -429,8 +429,8 @@ function Profile() {
                     </span>
                   </p>
                   <p>Submitted: {new Date(selectedSubmission.submitted_at).toLocaleDateString()}</p>
-                  {selectedSubmission.approved && (
-                    <p>Approved: {new Date(selectedSubmission.approved).toLocaleDateString()}</p>
+                  {selectedSubmission.admin_comment && (
+                    <p>Staff comment: {selectedSubmission.admin_comment}</p>
                   )}
                 </div>
               </div>
