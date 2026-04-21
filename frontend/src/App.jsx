@@ -16,6 +16,7 @@ import AdminFeedback from './pages/AdminFeedback';
 import AdminSuggestions from './pages/AdminSuggestions';
 import SuggestTradition from './pages/SuggestTradition';
 import Notifications from './pages/Notifications';
+import ManageTraditions from './pages/ManageTraditions';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/suggest" element={<SuggestTradition />} />
         <Route path="/admin/suggestions" element={<AdminSuggestions />} />
+        <Route path="/admin/manage-traditions" element={<ManageTraditions />} />
         <Route path="/help" element={<Help />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/admin/feedback" element={<AdminFeedback />} />

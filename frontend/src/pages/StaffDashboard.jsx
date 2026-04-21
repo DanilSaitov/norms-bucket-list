@@ -77,6 +77,12 @@ function StaffDashboard() {
             <span>Approve or deny user-submitted tradition ideas.</span>
           </Link>
 
+          <Link to="/admin/manage-traditions" className="staff-card">
+            <span className="staff-card__label">Content management</span>
+            <strong>Manage Traditions</strong>
+            <span>Edit, add, or permanently delete traditions.</span>
+          </Link>
+
           <Link to="/feedback" className="staff-card">
             <span className="staff-card__label">Student support</span>
             <strong>Feedback Inbox</strong>

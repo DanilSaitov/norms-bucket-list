@@ -74,6 +74,7 @@ function DashboardShell({ user, onLogout, children }) {
               <>
                 <Link to={dashboardPath} className="home-nav-link" onClick={handleNavAction}>Dashboard</Link>
                 <Link to="/pending" className="home-nav-link" onClick={handleNavAction}>Pending Traditions</Link>
+                <Link to="/admin/manage-traditions" className="home-nav-link" onClick={handleNavAction}>Manage Traditions</Link>
               <Link to="/admin/suggestions" className="home-nav-link" onClick={handleNavAction}>Manage Suggestions</Link>
                 <Link to="/feedback" className="home-nav-link" onClick={handleNavAction}>Feedback</Link>
                 <Link to="/notifications" className="home-nav-link" onClick={handleNavAction}>Notifications</Link>

@@ -4,6 +4,7 @@ const prisma = require('../config/database');
 const { Tags_enum } = require('@prisma/client');
 
 const VALID_TAGS = new Set(Object.values(Tags_enum));
+const CATEGORY_TAGS = new Set(['sports', 'academic', 'social']);
 
 function getSubmissionModel() {
   return (
@@ -127,8 +128,8 @@ async function createTradition(req, res) {
       tags,
     } = req.body;
 
-    if (!title || !description || !category || !image) {
-      return res.status(400).json({ error: 'title, description, category, and image are required' });
+    if (!title || !description || !image) {
+      return res.status(400).json({ error: 'title, description, and image are required' });
     }
 
     const { tags: parsedTags, invalid: invalidTags } = parseTagsInput(tags);
@@ -141,11 +142,16 @@ async function createTradition(req, res) {
       });
     }
 
+    const normalizedCategoryInput = normalizeTagValue(category);
+    const resolvedCategory = CATEGORY_TAGS.has(normalizedCategoryInput)
+      ? normalizedCategoryInput
+      : (parsedTags.find((tag) => CATEGORY_TAGS.has(tag)) || 'social');
+
     const created = await prisma.traditions.create({
       data: {
         title,
         description,
-        category,
+        category: resolvedCategory,
         image,
         intermittent: Boolean(intermittent),
         is_active: Boolean(is_active),
@@ -169,6 +175,115 @@ async function createTradition(req, res) {
     return res.status(201).json(created);
   } catch (error) {
     console.error('Create tradition error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+function getTraditionTags(req, res) {
+  return res.json({
+    tags: [...VALID_TAGS],
+  });
+}
+
+async function updateTradition(req, res) {
+  const traditionId = Number(req.params.traditionId);
+
+  if (!Number.isInteger(traditionId) || traditionId <= 0) {
+    return res.status(400).json({ error: 'Invalid tradition id' });
+  }
+
+  try {
+    const {
+      title,
+      description,
+      image,
+      tags,
+    } = req.body;
+
+    if (!title || !description || !image) {
+      return res.status(400).json({ error: 'title, description, and image are required' });
+    }
+
+    const { tags: parsedTags, invalid: invalidTags } = parseTagsInput(tags);
+
+    if (invalidTags.length > 0) {
+      return res.status(400).json({
+        error: 'Invalid tags in request body',
+        invalid_tags: invalidTags,
+        allowed_tags: [...VALID_TAGS],
+      });
+    }
+
+    const updated = await prisma.traditions.update({
+      where: { tradition_id: traditionId },
+      data: {
+        title,
+        description,
+        image,
+        tags: {
+          deleteMany: {},
+          ...(parsedTags.length > 0
+            ? {
+                create: parsedTags.map((tag) => ({ tag })),
+              }
+            : {}),
+        },
+      },
+      include: {
+        tags: {
+          select: {
+            tag: true,
+          },
+        },
+      },
+    });
+
+    return res.json({ tradition: updated });
+  } catch (error) {
+    console.error('Update tradition error:', error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Tradition not found' });
+    }
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function deleteTradition(req, res) {
+  const traditionId = Number(req.params.traditionId);
+
+  if (!Number.isInteger(traditionId) || traditionId <= 0) {
+    return res.status(400).json({ error: 'Invalid tradition id' });
+  }
+
+  try {
+    const submissionModel = getSubmissionModel();
+
+    if (submissionModel) {
+      await submissionModel.deleteMany({
+        where: {
+          tradition_id: traditionId,
+        },
+      });
+    }
+
+    await prisma.tag.deleteMany({
+      where: {
+        tradition_id: traditionId,
+      },
+    });
+
+    await prisma.traditions.delete({
+      where: {
+        tradition_id: traditionId,
+      },
+    });
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Delete tradition error:', error);
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Tradition not found' });
+    }
     return res.status(500).json({ error: 'Server error' });
   }
 }
@@ -551,13 +666,14 @@ async function reviewTraditionSubmission(req, res) {
       },
     });
 
-    const notificationType = action === 'approve' ? 'submission_approved' : 'submission_denied';
-    const notificationTitle = action === 'approve' ? 'Tradition Approved!' : 'Tradition Denied';
-    const notificationMessage = action === 'approve'
-      ? `Your submission for "${submission.tradition.title}" has been approved.`
-      : `Your submission for "${submission.tradition.title}" has been denied.${admin_comment ? ` Reason: ${String(admin_comment).trim()}` : ''}`;
-
     try {
+      const traditionTitle = submission?.tradition?.title || 'your tradition';
+      const notificationType = action === 'approve' ? 'submission_approved' : 'submission_denied';
+      const notificationTitle = action === 'approve' ? 'Tradition Approved!' : 'Tradition Denied';
+      const notificationMessage = action === 'approve'
+        ? `Your submission for "${traditionTitle}" has been approved.`
+        : `Your submission for "${traditionTitle}" has been denied.${admin_comment ? ` Reason: ${String(admin_comment).trim()}` : ''}`;
+
       await prisma.notification.create({
         data: {
           user_id: submission.user_id,
@@ -1079,7 +1195,10 @@ async function createNotification(req, res) {
 
 module.exports = {
   traditionsSearch,
+  getTraditionTags,
   createTradition,
+  updateTradition,
+  deleteTradition,
   uploadTraditionImage,
   getMyTraditionSubmission,
   createTraditionSubmission,

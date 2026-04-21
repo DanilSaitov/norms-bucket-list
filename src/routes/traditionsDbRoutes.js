@@ -26,8 +26,11 @@ function handleSubmissionUpload(req, res, next) {
  * GET /traditions
  */
 router.get('/', dbController.traditionsSearch);
-router.post('/', dbController.createTradition);
-router.post('/upload-image', uploadTraditionImage.single('image'), dbController.uploadTraditionImage);
+router.get('/tags', dbController.getTraditionTags);
+router.post('/', authenticate, requireRole(['admin', 'staff']), dbController.createTradition);
+router.patch('/:traditionId', authenticate, requireRole(['admin', 'staff']), dbController.updateTradition);
+router.delete('/:traditionId', authenticate, requireRole(['admin', 'staff']), dbController.deleteTradition);
+router.post('/upload-image', authenticate, requireRole(['admin', 'staff']), uploadTraditionImage.single('image'), dbController.uploadTraditionImage);
 router.get('/submissions/me', authenticate, dbController.getMySubmissions);
 router.get('/submissions/me/pending', authenticate, dbController.getMyPendingSubmissions);
 router.get('/submissions/me/completed', authenticate, dbController.getMyCompletedSubmissions);

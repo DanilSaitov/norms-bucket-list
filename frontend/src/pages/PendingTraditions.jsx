@@ -148,6 +148,18 @@ function PendingTraditions() {
     };
   }, [selectedTraditionId, fetchSubmissions, user]);
 
+  useEffect(() => {
+    if (!message.text) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setMessage({ type: '', text: '' });
+    }, 3500);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [message.text]);
+
   const handleLogout = async () => {
     try {
       await axios.post(`${API_BASE_URL}/auth/logout`, {}, {
