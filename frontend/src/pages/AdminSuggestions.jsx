@@ -61,6 +61,18 @@ function AdminSuggestions() {
     checkAuthentication();
   }, [filter]);
 
+  useEffect(() => {
+    if (!message.text) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setMessage({ type: '', text: '' });
+    }, 3500);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [message.text]);
+
   const handleReview = async (suggestionId, action, adminComment = '') => {
     setReviewing(true);
     setMessage({ type: '', text: '' });

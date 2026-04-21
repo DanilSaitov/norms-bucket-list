@@ -26,10 +26,14 @@ function handleSubmissionUpload(req, res, next) {
  * GET /traditions
  */
 router.get('/', dbController.traditionsSearch);
-router.post('/', dbController.createTradition);
-router.post('/upload-image', uploadTraditionImage.single('image'), dbController.uploadTraditionImage);
+router.get('/tags', dbController.getTraditionTags);
+router.post('/', authenticate, requireRole(['admin', 'staff']), dbController.createTradition);
+router.patch('/:traditionId', authenticate, requireRole(['admin', 'staff']), dbController.updateTradition);
+router.delete('/:traditionId', authenticate, requireRole(['admin', 'staff']), dbController.deleteTradition);
+router.post('/upload-image', authenticate, requireRole(['admin', 'staff']), uploadTraditionImage.single('image'), dbController.uploadTraditionImage);
 router.get('/submissions/me', authenticate, dbController.getMySubmissions);
 router.get('/submissions/me/pending', authenticate, dbController.getMyPendingSubmissions);
+router.get('/submissions/me/completed', authenticate, dbController.getMyCompletedSubmissions);
 router.get('/:traditionId/submissions/me', authenticate, dbController.getMyTraditionSubmission);
 router.post(
 	'/:traditionId/submissions',
@@ -37,6 +41,10 @@ router.post(
 	handleSubmissionUpload,
 	dbController.createTraditionSubmission,
 );
+
+router.get('/review/pending-traditions', authenticate, requireRole(['admin', 'staff']), dbController.getTraditionsAwaitingReview);
+router.get('/review/traditions/:traditionId/submissions', authenticate, requireRole(['admin', 'staff']), dbController.getTraditionPendingSubmissions);
+router.patch('/review/submissions/:submissionId', authenticate, requireRole(['admin', 'staff']), dbController.reviewTraditionSubmission);
 
 // Tradition suggestions routes
 router.post('/suggestions', authenticate, dbController.submitTraditionSuggestion);

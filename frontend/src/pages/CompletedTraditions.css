@@ -32,6 +32,21 @@
   display: flex;
   flex-direction: column;
   min-height: 100%;
+  overflow: hidden;
+}
+
+.completed-page__card-media {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #f1f4f2;
+}
+
+.completed-page__card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .completed-page__card-body {

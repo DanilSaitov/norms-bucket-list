@@ -89,6 +89,10 @@ function Home() {
       .then((response) => {
         if (cancelled) return;
         const authUser = response.data.user;
+        if (authUser.role !== 'student') {
+          navigate(authUser.role === 'admin' ? '/admin' : '/staff');
+          return;
+        }
         setUser(authUser);
         setLoading(false);
       })
