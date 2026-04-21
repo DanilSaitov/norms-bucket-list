@@ -8,6 +8,20 @@ const prisma = require('../config/database');
 // Secret key for JWT tokens (in production, move to .env file)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
+function getAuthCookieOptions() {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // In local development (http://localhost), SameSite=None without Secure is rejected by modern browsers.
+  // Use Lax for dev and None+Secure for production cross-site deployments.
+  return {
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction,
+    path: '/'
+  };
+}
+
 /**
  * SIGNUP - Create a new user account
  * 
@@ -71,12 +85,7 @@ async function signup(req, res) {
     );
 
     // Send token in HTTP-only cookie (more secure than localStorage)
-    res.cookie('auth_token', token, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'none',
-      secure: process.env.NODE_ENV === 'production'
-    });
+    res.cookie('auth_token', token, getAuthCookieOptions());
 
     // Return success (don't send password!)
     res.status(201).json({
@@ -140,12 +149,7 @@ async function login(req, res) {
     );
 
     // Send token in cookie
-    res.cookie('auth_token', token, {
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: 'none',
-      secure: process.env.NODE_ENV === 'production'
-    });
+    res.cookie('auth_token', token, getAuthCookieOptions());
 
     // Return success
     res.json({
@@ -173,7 +177,11 @@ async function login(req, res) {
  * Simply clears the auth cookie
  */
 function logout(req, res) {
-  res.clearCookie('auth_token');
+  res.clearCookie('auth_token', {
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/'
+  });
   res.json({ message: 'Logged out successfully' });
 }
 

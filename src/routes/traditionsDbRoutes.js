@@ -30,6 +30,7 @@ router.post('/', dbController.createTradition);
 router.post('/upload-image', uploadTraditionImage.single('image'), dbController.uploadTraditionImage);
 router.get('/submissions/me', authenticate, dbController.getMySubmissions);
 router.get('/submissions/me/pending', authenticate, dbController.getMyPendingSubmissions);
+router.get('/submissions/me/completed', authenticate, dbController.getMyCompletedSubmissions);
 router.get('/:traditionId/submissions/me', authenticate, dbController.getMyTraditionSubmission);
 router.post(
 	'/:traditionId/submissions',
@@ -37,6 +38,10 @@ router.post(
 	handleSubmissionUpload,
 	dbController.createTraditionSubmission,
 );
+
+router.get('/review/pending-traditions', authenticate, requireRole(['admin', 'staff']), dbController.getTraditionsAwaitingReview);
+router.get('/review/traditions/:traditionId/submissions', authenticate, requireRole(['admin', 'staff']), dbController.getTraditionPendingSubmissions);
+router.patch('/review/submissions/:submissionId', authenticate, requireRole(['admin', 'staff']), dbController.reviewTraditionSubmission);
 
 // Tradition suggestions routes
 router.post('/suggestions', authenticate, dbController.submitTraditionSuggestion);

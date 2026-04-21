@@ -1,7 +1,31 @@
 const { PrismaClient } = require("@prisma/client");
+const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
 async function main() {
+  const staffPassword = await bcrypt.hash('staff123', 10);
+
+  await prisma.user.upsert({
+    where: { email: 'staff@charlotte.edu' },
+    update: {
+      username: 'staff',
+      first_name: 'Staff',
+      last_name: 'Member',
+      password: staffPassword,
+      role: 'staff',
+      graduation_year: 2027,
+    },
+    create: {
+      username: 'staff',
+      first_name: 'Staff',
+      last_name: 'Member',
+      email: 'staff@charlotte.edu',
+      password: staffPassword,
+      role: 'staff',
+      graduation_year: 2027,
+    },
+  });
+
   const traditionsToSeed = [
     {
       title: 'Football game',

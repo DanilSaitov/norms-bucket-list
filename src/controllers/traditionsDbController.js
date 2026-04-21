@@ -341,6 +341,244 @@ async function getMyPendingSubmissions(req, res) {
   }
 }
 
+async function getMyCompletedSubmissions(req, res) {
+  try {
+    const submissionModel = getSubmissionModel();
+
+    if (!submissionModel) {
+      throw new Error('Submission model is not available on Prisma client. Run prisma generate and restart the server.');
+    }
+
+    const submissions = await submissionModel.findMany({
+      where: {
+        user_id: req.userId,
+        status: 'approved',
+      },
+      include: {
+        tradition: {
+          select: {
+            tradition_id: true,
+            title: true,
+            description: true,
+            image: true,
+            category: true,
+          },
+        },
+      },
+      orderBy: {
+        submitted_at: 'desc',
+      },
+    });
+
+    return res.json({ submissions });
+  } catch (error) {
+    console.error('Get my completed submissions error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function getTraditionsAwaitingReview(req, res) {
+  try {
+    const traditions = await prisma.traditions.findMany({
+      where: {
+        submissions: {
+          some: {
+            status: 'pending',
+          },
+        },
+      },
+      select: {
+        tradition_id: true,
+        title: true,
+        description: true,
+        image: true,
+        category: true,
+        created_at: true,
+        submissions: {
+          where: {
+            status: 'pending',
+          },
+          select: {
+            submission_id: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    return res.json({
+      traditions: traditions.map((tradition) => ({
+        ...tradition,
+        pending_submission_count: tradition.submissions.length,
+      })),
+    });
+  } catch (error) {
+    console.error('Get traditions awaiting review error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function getTraditionPendingSubmissions(req, res) {
+  const traditionId = Number(req.params.traditionId);
+
+  if (!Number.isInteger(traditionId) || traditionId <= 0) {
+    return res.status(400).json({ error: 'Invalid tradition id' });
+  }
+
+  try {
+    const submissionModel = getSubmissionModel();
+
+    if (!submissionModel) {
+      throw new Error('Submission model is not available on Prisma client. Run prisma generate and restart the server.');
+    }
+
+    const submissions = await submissionModel.findMany({
+      where: {
+        tradition_id: traditionId,
+        status: 'pending',
+      },
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            username: true,
+            first_name: true,
+            last_name: true,
+            profile_image_url: true,
+            graduation_year: true,
+          },
+        },
+        tradition: {
+          select: {
+            tradition_id: true,
+            title: true,
+            description: true,
+            image: true,
+            category: true,
+          },
+        },
+      },
+      orderBy: {
+        submitted_at: 'asc',
+      },
+    });
+
+    return res.json({ submissions });
+  } catch (error) {
+    console.error('Get tradition pending submissions error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function reviewTraditionSubmission(req, res) {
+  try {
+    const submissionId = Number(req.params.submissionId);
+    const { action, admin_comment } = req.body;
+
+    if (!['approve', 'deny'].includes(action)) {
+      return res.status(400).json({ error: 'Action must be "approve" or "deny"' });
+    }
+
+    if (!Number.isInteger(submissionId) || submissionId <= 0) {
+      return res.status(400).json({ error: 'Invalid submission id' });
+    }
+
+    const submissionModel = getSubmissionModel();
+
+    if (!submissionModel) {
+      throw new Error('Submission model is not available on Prisma client. Run prisma generate and restart the server.');
+    }
+
+    const submission = await submissionModel.findUnique({
+      where: { submission_id: submissionId },
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            username: true,
+            first_name: true,
+            last_name: true,
+            graduation_year: true,
+            profile_image_url: true,
+          },
+        },
+        tradition: {
+          select: {
+            tradition_id: true,
+            title: true,
+          },
+        },
+      },
+    });
+
+    if (!submission) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    if (submission.status !== 'pending') {
+      return res.status(400).json({ error: 'Submission has already been reviewed' });
+    }
+
+    const updatedSubmission = await submissionModel.update({
+      where: { submission_id: submissionId },
+      data: {
+        status: action === 'approve' ? 'approved' : 'denied',
+        approved: action === 'approve',
+        admin_comment: admin_comment ? String(admin_comment).trim() : null,
+      },
+      include: {
+        user: {
+          select: {
+            user_id: true,
+            username: true,
+            first_name: true,
+            last_name: true,
+            graduation_year: true,
+            profile_image_url: true,
+          },
+        },
+        tradition: {
+          select: {
+            tradition_id: true,
+            title: true,
+            description: true,
+            image: true,
+            category: true,
+          },
+        },
+      },
+    });
+
+    const notificationType = action === 'approve' ? 'submission_approved' : 'submission_denied';
+    const notificationTitle = action === 'approve' ? 'Tradition Approved!' : 'Tradition Denied';
+    const notificationMessage = action === 'approve'
+      ? `Your submission for "${submission.tradition.title}" has been approved.`
+      : `Your submission for "${submission.tradition.title}" has been denied.${admin_comment ? ` Reason: ${String(admin_comment).trim()}` : ''}`;
+
+    try {
+      await prisma.notification.create({
+        data: {
+          user_id: submission.user_id,
+          type: notificationType,
+          title: notificationTitle,
+          message: notificationMessage,
+          related_id: submission.tradition_id,
+        },
+      });
+    } catch (notificationError) {
+      // Review result should still succeed even if notification delivery fails.
+      console.error('Notification create error after submission review:', notificationError);
+    }
+
+    return res.json({ submission: updatedSubmission });
+  } catch (error) {
+    console.error('Review tradition submission error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
 async function getMySubmissions(req, res) {
   try {
     const submissionModel = getSubmissionModel();
@@ -846,7 +1084,11 @@ module.exports = {
   getMyTraditionSubmission,
   createTraditionSubmission,
   getMyPendingSubmissions,
+  getMyCompletedSubmissions,
   getMySubmissions,
+  getTraditionsAwaitingReview,
+  getTraditionPendingSubmissions,
+  reviewTraditionSubmission,
   submitTraditionSuggestion,
   getTraditionSuggestions,
   reviewTraditionSuggestion,
