@@ -5,8 +5,6 @@ import DashboardShell from '../components/DashboardShell';
 import './SuggestTradition.css';
 
 const API = 'http://localhost:3000/api';
-const BACKEND = API.replace('/api', '');
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
 
 function SuggestTradition() {
   const [user, setUser] = useState(null);
@@ -16,26 +14,9 @@ function SuggestTradition() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: '',
-    intermittent: false,
-    tags: '',
   });
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-
-  const categories = [
-    { value: 'sports', label: 'Sports' },
-    { value: 'academic', label: 'Academic' },
-    { value: 'social', label: 'Social' },
-  ];
-
-  const availableTags = [
-    'sports', 'academic', 'social', 'club', 'engagement',
-    'landmark', 'food', 'event', 'oncampus', 'offcampus',
-    'datesensitive', 'misc'
-  ];
 
   const loadUser = async () => {
     try {
@@ -63,103 +44,33 @@ function SuggestTradition() {
   }, []);
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleImageSelect = (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      setMessage({ type: 'error', text: 'Please select an image file.' });
-      return;
-    }
-
-    if (file.size > MAX_IMAGE_BYTES) {
-      setMessage({ type: 'error', text: `Image must be under ${MAX_IMAGE_BYTES / (1024 * 1024)}MB.` });
-      return;
-    }
-
-    setSelectedImage(file);
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImagePreview(reader.result);
-      setMessage({ type: '', text: '' });
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemoveImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
-    setMessage({ type: '', text: '' });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage({ type: '', text: '' });
 
-    if (!formData.title.trim() || !formData.description.trim() || !formData.category) {
+    if (!formData.title.trim() || !formData.description.trim()) {
       setMessage({ type: 'error', text: 'Please fill in all required fields.' });
-      return;
-    }
-
-    if (!selectedImage) {
-      setMessage({ type: 'error', text: 'Please select an image for your tradition suggestion.' });
       return;
     }
 
     setSubmitting(true);
 
     try {
-      // First upload the image
-      const imageFormData = new FormData();
-      imageFormData.append('image', selectedImage);
-
-      const uploadResponse = await axios.post(
-        `${API}/traditions/upload-image`,
-        imageFormData,
-        {
-          withCredentials: true,
-          headers: { 'Content-Type': 'multipart/form-data' }
-        }
-      );
-
-      // Then submit the suggestion
-      const suggestionData = {
-        ...formData,
+      await axios.post(`${API}/traditions/suggestions`, {
         title: formData.title.trim(),
         description: formData.description.trim(),
-        image: uploadResponse.data.image,
-        tags: formData.tags.trim(),
-      };
-
-      await axios.post(`${API}/traditions/suggestions`, suggestionData, {
-        withCredentials: true,
-      });
+      }, { withCredentials: true });
 
       setMessage({
         type: 'success',
         text: 'Your tradition suggestion has been submitted! It will be reviewed by an administrator.'
       });
 
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        category: '',
-        intermittent: false,
-        tags: '',
-      });
-      setSelectedImage(null);
-      setImagePreview(null);
+      setFormData({ title: '', description: '' });
 
     } catch (err) {
       setMessage({
@@ -203,8 +114,6 @@ function SuggestTradition() {
           )}
 
           <div className="suggest-section">
-            <h2 className="suggest-section__title">Basic Information</h2>
-
             <label className="suggest-field">
               <span className="suggest-field__label">
                 Tradition Title <span className="required">*</span>
@@ -236,94 +145,6 @@ function SuggestTradition() {
                 required
               />
             </label>
-
-            <label className="suggest-field">
-              <span className="suggest-field__label">
-                Category <span className="required">*</span>
-              </span>
-              <select
-                className="suggest-field__select"
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-                required
-              >
-                <option value="">Select a category</option>
-                {categories.map(cat => (
-                  <option key={cat.value} value={cat.value}>{cat.label}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="suggest-field suggest-field--checkbox">
-              <input
-                type="checkbox"
-                name="intermittent"
-                checked={formData.intermittent}
-                onChange={handleInputChange}
-              />
-              <span className="suggest-field__label">
-                This is an intermittent/special occasion tradition
-              </span>
-            </label>
-          </div>
-
-          <div className="suggest-section">
-            <h2 className="suggest-section__title">Tags & Image</h2>
-
-            <label className="suggest-field">
-              <span className="suggest-field__label">Tags (optional)</span>
-              <input
-                className="suggest-field__input"
-                type="text"
-                name="tags"
-                value={formData.tags}
-                onChange={handleInputChange}
-                placeholder="e.g., food, social, oncampus (comma-separated)"
-              />
-              <small className="suggest-field__help">
-                Available tags: {availableTags.join(', ')}
-              </small>
-            </label>
-
-            <div className="suggest-image-section">
-              <span className="suggest-field__label">
-                Tradition Image <span className="required">*</span>
-              </span>
-
-              {imagePreview ? (
-                <div className="suggest-image-preview">
-                  <img
-                    src={imagePreview}
-                    alt="Tradition preview"
-                    className="suggest-image-preview__img"
-                  />
-                  <button
-                    type="button"
-                    className="suggest-image-preview__remove"
-                    onClick={handleRemoveImage}
-                    aria-label="Remove image"
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <div className="suggest-image-upload">
-                  <label className="suggest-upload-btn">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageSelect}
-                      style={{ display: 'none' }}
-                    />
-                    Choose Image
-                  </label>
-                  <p className="suggest-upload-help">
-                    PNG or JPG, up to 5MB. This will help others understand your tradition suggestion.
-                  </p>
-                </div>
-              )}
-            </div>
           </div>
 
           <div className="suggest-actions">

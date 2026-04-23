@@ -54,10 +54,6 @@ model Tradition_Suggestions {
   user_id           Int
   title             String
   description       String
-  category          Category
-  image             String           // Path or URL to suggested image
-  intermittent      Boolean          @default(false)
-  tags              String?          // Comma-separated tag suggestions
   status            SuggestionStatus @default(pending)
   admin_comment     String?
   submitted_at      DateTime         @default(now())

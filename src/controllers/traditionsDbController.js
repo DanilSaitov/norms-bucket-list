@@ -669,10 +669,10 @@ async function reviewTraditionSubmission(req, res) {
     try {
       const traditionTitle = submission?.tradition?.title || 'your tradition';
       const notificationType = action === 'approve' ? 'submission_approved' : 'submission_denied';
-      const notificationTitle = action === 'approve' ? 'Tradition Approved!' : 'Tradition Denied';
+      const notificationTitle = traditionTitle;
       const notificationMessage = action === 'approve'
-        ? `Your submission for "${traditionTitle}" has been approved.`
-        : `Your submission for "${traditionTitle}" has been denied.${admin_comment ? ` Reason: ${String(admin_comment).trim()}` : ''}`;
+        ? `Your submission has been approved.`
+        : `Your submission has been denied.${admin_comment ? ` Reason: ${String(admin_comment).trim()}` : ''}`;
 
       await prisma.notification.create({
         data: {
@@ -737,38 +737,17 @@ async function getMySubmissions(req, res) {
 
 async function submitTraditionSuggestion(req, res) {
   try {
-    const {
-      title,
-      description,
-      category,
-      image,
-      intermittent = false,
-      tags,
-    } = req.body;
+    const { title, description } = req.body;
 
-    if (!title || !description || !category || !image) {
-      return res.status(400).json({ error: 'title, description, category, and image are required' });
-    }
-
-    const { tags: parsedTags, invalid: invalidTags } = parseTagsInput(tags);
-
-    if (invalidTags.length > 0) {
-      return res.status(400).json({
-        error: 'Invalid tags in request body',
-        invalid_tags: invalidTags,
-        allowed_tags: [...VALID_TAGS],
-      });
+    if (!title || !description) {
+      return res.status(400).json({ error: 'title and description are required' });
     }
 
     const suggestion = await prisma.tradition_Suggestions.create({
       data: {
         user_id: req.userId,
-        title,
-        description,
-        category,
-        image,
-        intermittent: Boolean(intermittent),
-        tags: parsedTags.length > 0 ? parsedTags.join(',') : null,
+        title: title.trim(),
+        description: description.trim(),
         status: 'pending',
       },
     });
@@ -845,29 +824,6 @@ async function reviewTraditionSuggestion(req, res) {
       reviewed_by: req.userId,
     };
 
-    // If approving, create the actual tradition
-    if (action === 'approve') {
-      const { tags: parsedTags } = parseTagsInput(suggestion.tags);
-
-      await prisma.traditions.create({
-        data: {
-          title: suggestion.title,
-          description: suggestion.description,
-          category: suggestion.category,
-          image: suggestion.image,
-          intermittent: suggestion.intermittent,
-          is_active: true,
-          ...(parsedTags.length > 0
-            ? {
-                tags: {
-                  create: parsedTags.map((tag) => ({ tag })),
-                },
-              }
-            : {}),
-        },
-      });
-    }
-
     const updatedSuggestion = await prisma.tradition_Suggestions.update({
       where: { suggestion_id: suggestionId },
       data: updateData,
@@ -885,10 +841,10 @@ async function reviewTraditionSuggestion(req, res) {
 
     // Create notification for the user
     const notificationType = action === 'approve' ? 'suggestion_approved' : 'suggestion_denied';
-    const notificationTitle = action === 'approve' ? 'Suggestion Approved!' : 'Suggestion Denied';
+    const notificationTitle = suggestion.title;
     const notificationMessage = action === 'approve'
-      ? `Your suggestion "${suggestion.title}" has been approved and added to the traditions list.`
-      : `Your suggestion "${suggestion.title}" has been denied. ${admin_comment ? `Reason: ${admin_comment}` : ''}`;
+      ? `Your suggestion has been approved.`
+      : `Your suggestion has been denied.${admin_comment ? ` Reason: ${admin_comment}` : ''}`;
 
     await prisma.notification.create({
       data: {
@@ -917,7 +873,6 @@ async function getMySuggestions(req, res) {
         suggestion_id: true,
         title: true,
         description: true,
-        category: true,
         status: true,
         admin_comment: true,
         submitted_at: true,
@@ -1193,6 +1148,50 @@ async function createNotification(req, res) {
   }
 }
 
+async function deleteNotification(req, res) {
+  try {
+    const notificationId = Number(req.params.id);
+
+    if (!Number.isInteger(notificationId) || notificationId <= 0) {
+      return res.status(400).json({ error: 'Invalid notification id' });
+    }
+
+    const notification = await prisma.notification.findUnique({
+      where: { notification_id: notificationId },
+    });
+
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+
+    if (notification.user_id !== req.userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    await prisma.notification.delete({
+      where: { notification_id: notificationId },
+    });
+
+    return res.json({ success: true, message: 'Notification deleted' });
+  } catch (error) {
+    console.error('Delete notification error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
+async function clearAllNotifications(req, res) {
+  try {
+    const result = await prisma.notification.deleteMany({
+      where: { user_id: req.userId },
+    });
+
+    return res.json({ success: true, message: 'All notifications cleared', count: result.count });
+  } catch (error) {
+    console.error('Clear all notifications error:', error);
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
+
 module.exports = {
   traditionsSearch,
   getTraditionTags,
@@ -1220,4 +1219,6 @@ module.exports = {
   getUserNotifications,
   markNotificationAsRead,
   createNotification,
+  deleteNotification,
+  clearAllNotifications,
 };
