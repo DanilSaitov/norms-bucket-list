@@ -52,9 +52,14 @@ function AdminFeedback() {
 
   useEffect(() => {
     const init = async () => {
-      await loadUser();
-      await loadFeedback();
-      setLoading(false);
+      try {
+        await loadUser();
+        await loadFeedback();
+      } catch (error) {
+        console.error('Init error:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     init();
   }, []);
