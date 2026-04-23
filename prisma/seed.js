@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   const staffPassword = await bcrypt.hash('staff123', 10);
+  const adminPassword = await bcrypt.hash('admin123', 10);
 
   await prisma.user.upsert({
     where: { email: 'staff@charlotte.edu' },
@@ -25,6 +26,31 @@ async function main() {
       graduation_year: 2027,
     },
   });
+
+  console.log('Seeded staff user');
+
+  await prisma.user.upsert({
+    where: { email: 'admin@charlotte.edu' },
+    update: {
+      username: 'admin',
+      first_name: 'Admin',
+      last_name: 'User',
+      password: adminPassword,
+      role: 'admin',
+      graduation_year: 2027,
+    },
+    create: {
+      username: 'admin',
+      first_name: 'Admin',
+      last_name: 'User',
+      email: 'admin@charlotte.edu',
+      password: adminPassword,
+      role: 'admin',
+      graduation_year: 2027,
+    },
+  });
+
+  console.log('Seeded admin user');
 
   const traditionsToSeed = [
     {
