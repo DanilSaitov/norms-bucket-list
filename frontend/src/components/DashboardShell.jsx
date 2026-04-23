@@ -1,10 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import charlotteLogoWhite from '../assets/homepage/charlotteLogoWhite.png';
 import '../pages/Home.css';
 
+const API = 'http://localhost:3000/api';
+
 function DashboardShell({ user, onLogout, children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    axios.get(`${API}/notifications`, { withCredentials: true })
+      .then(res => {
+        const count = (res.data.notifications || []).filter(n => !n.is_read).length;
+        setUnreadCount(count);
+      })
+      .catch(() => {});
+  }, [user]);
+
   const dashboardPath = user?.role === 'admin' ? '/admin' : user?.role === 'staff' ? '/staff' : '/home';
   const classYear = user?.role === 'student'
     ? (user?.graduation_year ? `Class of ${user.graduation_year}` : 'Class Year N/A')
@@ -77,7 +92,9 @@ function DashboardShell({ user, onLogout, children }) {
                 <Link to="/admin/manage-traditions" className="home-nav-link" onClick={handleNavAction}>Manage Traditions</Link>
               <Link to="/admin/suggestions" className="home-nav-link" onClick={handleNavAction}>Manage Suggestions</Link>
                 <Link to="/feedback" className="home-nav-link" onClick={handleNavAction}>Feedback</Link>
-                <Link to="/notifications" className="home-nav-link" onClick={handleNavAction}>Notifications</Link>
+                <Link to="/notifications" className="home-nav-link" onClick={handleNavAction}>
+                  Notifications{unreadCount > 0 && <span className="nav-badge">{unreadCount}</span>}
+                </Link>
                 <Link to="/help" className="home-nav-link" onClick={handleNavAction}>Help</Link>
               </>
             ) : (
@@ -85,7 +102,9 @@ function DashboardShell({ user, onLogout, children }) {
                 <Link to="/completed" className="home-nav-link" onClick={handleNavAction}>Completed Traditions</Link>
                 <Link to="/pending" className="home-nav-link" onClick={handleNavAction}>Pending Traditions</Link>
                 <Link to="/suggest" className="home-nav-link" onClick={handleNavAction}>Suggest Tradition</Link>
-                <Link to="/notifications" className="home-nav-link" onClick={handleNavAction}>Notifications</Link>
+                <Link to="/notifications" className="home-nav-link" onClick={handleNavAction}>
+                  Notifications{unreadCount > 0 && <span className="nav-badge">{unreadCount}</span>}
+                </Link>
                 <Link to="/feedback" className="home-nav-link" onClick={handleNavAction}>Feedback</Link>
                 <Link to="/help" className="home-nav-link" onClick={handleNavAction}>Help</Link>
               </>

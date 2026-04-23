@@ -391,6 +391,23 @@
   outline-offset: 2px;
 }
 
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e84040;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  padding: 0 5px;
+  margin-left: 7px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
 .logout-btn {
   margin-top: auto;
   border: none;

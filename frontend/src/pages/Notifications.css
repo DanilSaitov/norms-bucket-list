@@ -86,6 +86,12 @@
   font-size: 0.95rem;
 }
 
+.notification-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .mark-read-btn {
   border: 1px solid #dfe7f4;
   background: white;
@@ -99,6 +105,46 @@
 
 .mark-read-btn:hover {
   background: #eef4ff;
+  transform: translateY(-1px);
+}
+
+.clear-btn {
+  border: 1px solid #e8d4d4;
+  background: white;
+  color: #721f1f;
+  padding: 10px 16px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.clear-btn:hover {
+  background: #fff0f0;
+  transform: translateY(-1px);
+}
+
+.notifications-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e9edf6;
+}
+
+.clear-all-btn {
+  border: 1px solid #e8d4d4;
+  background: #fff5f5;
+  color: #721f1f;
+  padding: 10px 20px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.clear-all-btn:hover {
+  background: #ffe0e0;
   transform: translateY(-1px);
 }
 

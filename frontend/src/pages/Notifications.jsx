@@ -70,6 +70,37 @@ function Notifications() {
     }
   };
 
+  const deleteNotification = async (notificationId) => {
+    try {
+      await axios.delete(`${API}/notifications/${notificationId}`, {
+        withCredentials: true,
+      });
+      // Remove from local state
+      setNotifications(prev =>
+        prev.filter(notification => notification.notification_id !== notificationId)
+      );
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+      setError('Failed to delete notification');
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    if (!window.confirm('Are you sure you want to clear all notifications?')) {
+      return;
+    }
+    try {
+      await axios.delete(`${API}/notifications`, {
+        withCredentials: true,
+      });
+      // Clear all from local state
+      setNotifications([]);
+    } catch (err) {
+      console.error('Error clearing notifications:', err);
+      setError('Failed to clear notifications');
+    }
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -145,37 +176,53 @@ function Notifications() {
               <p>Notifications will appear here when your requests are reviewed.</p>
             </div>
           ) : (
-            <div className="notifications-list">
-              {notifications.map(notification => (
-                <div
-                  key={notification.notification_id}
-                  className={`notification-item ${notification.is_read ? 'read' : 'unread'}`}
+            <>
+              <div className="notifications-actions">
+                <button
+                  className="clear-all-btn"
+                  onClick={clearAllNotifications}
+                  title="Clear all notifications"
                 >
-                  <div className="notification-header">
-                    <span className="notification-icon">{getNotificationIcon(notification.type)}</span>
-                    <div className="notification-title-wrap">
-                      <h3 className="notification-title">{notification.title}</h3>
-                      <span className="notification-date">{formatDate(notification.created_at)}</span>
+                  Clear All
+                </button>
+              </div>
+              <div className="notifications-list">
+                {notifications.map(notification => (
+                  <div
+                    key={notification.notification_id}
+                    className={`notification-item ${notification.is_read ? 'read' : 'unread'}`}
+                  >
+                    <div className="notification-header">
+                      <span className="notification-icon">{getNotificationIcon(notification.type)}</span>
+                      <div className="notification-title-wrap">
+                        <h3 className="notification-title">{notification.title}</h3>
+                        <span className="notification-date">{formatDate(notification.created_at)}</span>
+                      </div>
+                      <div className="notification-actions">
+                        {!notification.is_read && (
+                          <button
+                            className="mark-read-btn"
+                            onClick={() => markAsRead(notification.notification_id)}
+                            title="Mark as read"
+                          >
+                            Mark read
+                          </button>
+                        )}
+                        <button
+                          className="clear-btn"
+                          onClick={() => deleteNotification(notification.notification_id)}
+                          title="Clear notification"
+                        >
+                          Clear
+                        </button>
+                      </div>
                     </div>
-                    {!notification.is_read && (
-                      <button
-                        className="mark-read-btn"
-                        onClick={() => markAsRead(notification.notification_id)}
-                        title="Mark as read"
-                      >
-                        Mark read
-                      </button>
-                    )}
+
+                    <p className="notification-message">{notification.message}</p>
                   </div>
-
-                  <p className="notification-message">{notification.message}</p>
-
-                  {notification.related_id && (
-                    <div className="notification-related">Related ID: {notification.related_id}</div>
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
