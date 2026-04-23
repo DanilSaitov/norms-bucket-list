@@ -83,6 +83,14 @@ function StaffDashboard() {
             <span>Edit, add, or permanently delete traditions.</span>
           </Link>
 
+          {user?.role === 'admin' && (
+            <Link to="/admin/staff" className="staff-card staff-card--secondary">
+              <span className="staff-card__label">Team management</span>
+              <strong>Create Staff User</strong>
+              <span>Invite new staff members for review and moderation.</span>
+            </Link>
+          )}
+
           <Link to="/feedback" className="staff-card">
             <span className="staff-card__label">Student support</span>
             <strong>Feedback Inbox</strong>

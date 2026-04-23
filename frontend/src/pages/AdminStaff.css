@@ -1,0 +1,159 @@
+.admin-staff {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 30px 24px;
+}
+
+.admin-staff__hero {
+  margin-bottom: 32px;
+}
+
+.admin-staff__eyebrow {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: #9e7d1d;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.admin-staff__hero h1 {
+  margin: 0 0 12px;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.admin-staff__hero p {
+  margin: 0;
+  color: #4b5563;
+  max-width: 720px;
+}
+
+.admin-staff__card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.admin-staff__message {
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.admin-staff__message--success {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.admin-staff__message--error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.admin-staff__form {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-staff__form label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.admin-staff__form input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  font-size: 1rem;
+  color: #111827;
+  background: #f8fafc;
+}
+
+.admin-staff__form input:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  background: #ffffff;
+}
+
+.admin-staff__submit {
+  align-self: start;
+  border: none;
+  border-radius: 12px;
+  background: #0f172a;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.admin-staff__submit:hover {
+  background: #111827;
+}
+
+.admin-staff__staff-list {
+  margin-top: 32px;
+}
+
+.admin-staff__staff-list h2 {
+  margin: 0 0 18px;
+  font-size: 1.3rem;
+}
+
+.admin-staff__empty {
+  margin: 0;
+  color: #4b5563;
+}
+
+.admin-staff__table-wrap {
+  overflow-x: auto;
+}
+
+.admin-staff__table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.admin-staff__table th,
+.admin-staff__table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-staff__table th {
+  color: #374151;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.admin-staff__table td {
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.admin-staff__delete {
+  border: none;
+  background: #ef4444;
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.admin-staff__delete:hover {
+  background: #dc2626;
+}

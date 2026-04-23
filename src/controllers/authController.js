@@ -107,6 +107,117 @@ async function signup(req, res) {
   }
 }
 
+async function createStaffUser(req, res) {
+  try {
+    const { username, first_name, last_name, email, password, graduation_year } = req.body;
+
+    if (!username || !first_name || !last_name || !email || !password || !graduation_year) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    if (!email.endsWith('@charlotte.edu')) {
+      return res.status(400).json({ error: 'Only UNCC emails (@charlotte.edu) are allowed' });
+    }
+
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { username },
+          { email }
+        ]
+      }
+    });
+
+    if (existingUser) {
+      return res.status(409).json({ error: 'Username or email already exists' });
+    }
+
+    const parsedGraduationYear = parseInt(graduation_year, 10);
+    if (Number.isNaN(parsedGraduationYear) || parsedGraduationYear < 1900 || parsedGraduationYear > 2100) {
+      return res.status(400).json({ error: 'Please enter a valid graduation year' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await prisma.user.create({
+      data: {
+        username,
+        first_name,
+        last_name,
+        email,
+        password: hashedPassword,
+        role: 'staff',
+        graduation_year: parsedGraduationYear
+      }
+    });
+
+    res.status(201).json({
+      message: 'Staff user created successfully',
+      user: {
+        user_id: newUser.user_id,
+        username: newUser.username,
+        first_name: newUser.first_name,
+        last_name: newUser.last_name,
+        email: newUser.email,
+        role: newUser.role,
+        graduation_year: newUser.graduation_year
+      }
+    });
+  } catch (error) {
+    console.error('Create staff user error:', error);
+    res.status(500).json({ error: 'Server error during staff creation' });
+  }
+}
+
+async function getStaffUsers(req, res) {
+  try {
+    const staffUsers = await prisma.user.findMany({
+      where: { role: 'staff' },
+      select: {
+        user_id: true,
+        username: true,
+        first_name: true,
+        last_name: true,
+        email: true,
+        graduation_year: true,
+        created_at: true
+      },
+      orderBy: { created_at: 'desc' }
+    });
+
+    res.json({ staff: staffUsers });
+  } catch (error) {
+    console.error('Get staff users error:', error);
+    res.status(500).json({ error: 'Server error loading staff users' });
+  }
+}
+
+async function deleteStaffUser(req, res) {
+  try {
+    const staffId = parseInt(req.params.staffId, 10);
+
+    if (Number.isNaN(staffId)) {
+      return res.status(400).json({ error: 'Invalid staff user ID' });
+    }
+
+    const staffUser = await prisma.user.findUnique({
+      where: { user_id: staffId },
+      select: { user_id: true, role: true }
+    });
+
+    if (!staffUser || staffUser.role !== 'staff') {
+      return res.status(404).json({ error: 'Staff user not found' });
+    }
+
+    await prisma.user.delete({ where: { user_id: staffId } });
+
+    res.json({ message: 'Staff user deleted successfully' });
+  } catch (error) {
+    console.error('Delete staff user error:', error);
+    res.status(500).json({ error: 'Server error deleting staff user' });
+  }
+}
+
 /**
  * LOGIN - Authenticate existing user
  * 
@@ -367,6 +478,9 @@ async function changePassword(req, res) {
 
 module.exports = {
   signup,
+  createStaffUser,
+  getStaffUsers,
+  deleteStaffUser,
   login,
   logout,
   getCurrentUser,
