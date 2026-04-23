@@ -78,6 +78,7 @@ async function traditionsSearch(req, res) {
 
   if(sortBy) {
       orderClause = sortByTable[sortBy];
+      console.log("");
   }
 
   const whereClause = {
