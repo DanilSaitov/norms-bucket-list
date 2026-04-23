@@ -67,7 +67,7 @@ function Home() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchTags, setSearchTags] = useState('');
+  const [searchTags, setSearchTags] = useState([]);
   const [sortBy, setSortBy] = useState('');
   const [traditions, setTraditions] = useState([]);
   const [activeTradition, setActiveTradition] = useState(null);
@@ -124,7 +124,7 @@ function Home() {
     if (!user) return;
     let cancelled = false;
 
-    axios.get(`http://localhost:3000/api/traditions?search=${searchTerm}&tags=${searchTags}&sortBy=${searchOrder}`, {
+    axios.get(`http://localhost:3000/api/traditions?search=${searchTerm}&tags=${searchTags}&sortBy=${sortBy}`, {
       withCredentials: true,
     })
       .then((response) => {
@@ -140,7 +140,7 @@ function Home() {
     return () => {
       cancelled = true;
     };
-  }, [searchTerm, user]);
+  }, [searchTerm, user, searchTags, sortBy]);
 
   const fetchSubmissionStatus = async (traditionId) => {
     try {
@@ -240,6 +240,47 @@ function Home() {
               setSearchTerm(nextValue);
             }}
           />
+          <details style={{color: "#333"}}>
+          <summary>Select tags (with control + click)</summary>
+          <select
+            name="searchTags"
+            value={searchTags}
+            multiple={true}
+            onChange={(e) => {
+                const val = Array.from(e.target.selectedOptions, o => o.value);
+                setSearchTags(val);
+                console.log(searchTags);
+            }}
+          >
+            <option value=""> -- none -- </option>
+            <option value="sports">sports</option>
+            <option value="academic">academic</option>
+            <option value="social">social</option>
+            <option value="club">club</option>
+            <option value="engagement">engagement</option>
+            <option value="landmark">landmark</option>
+            <option value="food">food</option>
+            <option value="event">event</option>
+            <option value="oncampus">oncampus</option>
+            <option value="offcampus">offcampus</option>
+            <option value="datesensitive">datesensitive</option>
+            <option value="misc">misc</option>
+          </select>
+          </details>
+          
+          <select
+            name="sortBySelect"
+            value={sortBy}
+            onChange={(e) => {
+                const val = e.target.value;
+                setSortBy(val);
+            }}
+          >
+              <option value="azAsc">Alphabetical ascending</option>
+              <option value="azDesc">Alphabetical descending</option>
+              <option value="createAsc">Creation date ascending</option>
+              <option value="createDesc">Creation date descending</option>
+          </select>
         </div>
       </section>
 
