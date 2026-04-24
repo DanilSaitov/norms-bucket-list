@@ -62,12 +62,25 @@ function normalizeTraditions(payload) {
   return [];
 }
 
+function pickRandomTraditions(items, count = 3) {
+  if (!Array.isArray(items) || items.length === 0) return [];
+
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
+
 function Home() {
   const imageCacheToken = useState(() => Date.now())[0];
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [traditions, setTraditions] = useState([]);
+  const [featuredTraditions, setFeaturedTraditions] = useState([]);
   const [activeTradition, setActiveTradition] = useState(null);
   const [submissionStatus, setSubmissionStatus] = useState(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -139,6 +152,10 @@ function Home() {
       cancelled = true;
     };
   }, [searchTerm, user]);
+
+  useEffect(() => {
+    setFeaturedTraditions(pickRandomTraditions(traditions, 3));
+  }, [traditions]);
 
   const fetchSubmissionStatus = async (traditionId) => {
     try {
@@ -240,6 +257,39 @@ function Home() {
           />
         </div>
       </section>
+
+      {!searchTerm && featuredTraditions.length > 0 && (
+        <section className="featured-traditions-widget">
+          <div className="featured-traditions-widget__header">
+            <h2>Weekly Featured Traditions</h2>
+          </div>
+          <div className="featured-traditions-widget__list">
+            {featuredTraditions.map((item, index) => {
+              return (
+                <article
+                  key={item.tradition_id ?? item.id ?? `featured-${index}`}
+                  className="featured-tradition-card"
+                >
+                  <button
+                    type="button"
+                    className="featured-tradition-card__media-button"
+                    onClick={() => handleViewDetails(item)}
+                    aria-label={`View details for ${item.title || 'tradition'}`}
+                  >
+                    <img
+                      src={resolveTraditionImage(item.image, imageCacheToken)}
+                      alt={item.title ? `${item.title}` : 'Tradition'}
+                    />
+                  </button>
+                  <div className="featured-tradition-card__body">
+                    {item.description && <p>{item.description}</p>}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="home-traditions-grid" id="traditions">
         {searchTerm && traditions.length === 0 && (
