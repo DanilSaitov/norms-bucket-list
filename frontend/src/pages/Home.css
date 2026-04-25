@@ -452,6 +452,63 @@
   font-size: 16px;
 }
 
+.featured-traditions-widget {
+  border: 1px solid #d9e6de;
+  border-radius: 16px;
+  background: #f5faf7;
+  padding: 12px;
+}
+
+.featured-traditions-widget__header {
+  margin-bottom: 10px;
+}
+
+.featured-traditions-widget__header h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: #11472b;
+}
+
+.featured-traditions-widget__list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.featured-tradition-card {
+  border: 1px solid #d0d0d0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.featured-tradition-card__media-button {
+  width: 100%;
+  border: none;
+  padding: 0;
+  background: #e8e8e8;
+  cursor: pointer;
+  display: block;
+}
+
+.featured-tradition-card__media-button img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+}
+
+.featured-tradition-card__body {
+  padding: 8px 10px 10px;
+}
+
+.featured-tradition-card__body p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #555;
+  line-height: 1.35;
+}
+
 .traditions-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -617,6 +674,10 @@
   .home-traditions-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .featured-traditions-widget__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 900px) {
@@ -726,6 +787,10 @@
   }
 
   .home-traditions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .featured-traditions-widget__list {
     grid-template-columns: 1fr;
   }
 
