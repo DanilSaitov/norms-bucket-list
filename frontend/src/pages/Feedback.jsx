@@ -21,8 +21,16 @@ function Feedback() {
   const loadUser = async () => {
     try {
       const response = await axios.get(`${API}/auth/me`, { withCredentials: true });
-      setUser(response.data.user);
-      return response.data.user;
+      const currentUser = response.data.user;
+      
+      // Prevent staff/admin from accessing feedback submission
+      if (currentUser.role === 'staff' || currentUser.role === 'admin') {
+        navigate('/home');
+        return;
+      }
+      
+      setUser(currentUser);
+      return currentUser;
     } catch (err) {
       console.error('Not authenticated:', err);
       navigate('/login');

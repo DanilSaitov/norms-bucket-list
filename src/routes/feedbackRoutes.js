@@ -8,9 +8,14 @@ const { authenticate, requireRole } = require('../middleware/auth');
 
 /**
  * POST /feedback
- * Submit feedback (students)
+ * Submit feedback (students only)
  */
-router.post('/', authenticate, dbController.submitFeedback);
+router.post('/', authenticate, (req, res, next) => {
+  if (req.role === 'staff' || req.role === 'admin') {
+    return res.status(403).json({ error: 'Staff and admin users cannot submit feedback' });
+  }
+  next();
+}, dbController.submitFeedback);
 
 /**
  * GET /feedback/me

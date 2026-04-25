@@ -90,8 +90,11 @@ function DashboardShell({ user, onLogout, children }) {
                 <Link to={dashboardPath} className="home-nav-link" onClick={handleNavAction}>Dashboard</Link>
                 <Link to="/pending" className="home-nav-link" onClick={handleNavAction}>Pending Traditions</Link>
                 <Link to="/admin/manage-traditions" className="home-nav-link" onClick={handleNavAction}>Manage Traditions</Link>
-              <Link to="/admin/suggestions" className="home-nav-link" onClick={handleNavAction}>Manage Suggestions</Link>
-                <Link to="/feedback" className="home-nav-link" onClick={handleNavAction}>Feedback</Link>
+                <Link to="/admin/suggestions" className="home-nav-link" onClick={handleNavAction}>Manage Suggestions</Link>
+                {user?.role === 'admin' && (
+                  <Link to="/admin/staff" className="home-nav-link" onClick={handleNavAction}>Create Staff User</Link>
+                )}
+                <Link to="/admin/feedback" className="home-nav-link">Feedback Inbox</Link>
                 <Link to="/notifications" className="home-nav-link" onClick={handleNavAction}>
                   Notifications{unreadCount > 0 && <span className="nav-badge">{unreadCount}</span>}
                 </Link>

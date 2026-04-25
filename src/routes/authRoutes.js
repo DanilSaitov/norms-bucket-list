@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, requireRole } = require('../middleware/auth');
 
 /**
  * POST /api/auth/signup
@@ -14,6 +14,9 @@ const { authenticate } = require('../middleware/auth');
  * Returns: { message, user }
  */
 router.post('/signup', authController.signup);
+router.post('/staff', authenticate, requireRole('admin'), authController.createStaffUser);
+router.get('/staff', authenticate, requireRole('admin'), authController.getStaffUsers);
+router.delete('/staff/:staffId', authenticate, requireRole('admin'), authController.deleteStaffUser);
 
 /**
  * POST /api/auth/login
