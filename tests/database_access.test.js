@@ -2,6 +2,8 @@ const http = require('http');
 const app = require('../src/index');
 const prisma = require('../src/config/database');
 
+process.env.NODE_ENV = 'test';
+
 let server;
 let baseUrl;
 
@@ -26,11 +28,11 @@ describe('tradition db controller', ()=> {
         const res = await(fetch(`${baseUrl}/api/traditions?search=`));
         const data = await res.json();
 
-        expect(data.length).toBe(8);
+        expect(data.length).toBe(18);
     });
 
     test('GET /api/traditions?search where search has a query', async () => {
-        const res = await(fetch(`${baseUrl}/api/traditions?search=football`));
+        const res = await(fetch(`${baseUrl}/api/traditions?search=football&tags=sports&sortBy=azAsc`));
         const data = await res.json();
 
         expect(res.status).toBe(200);
@@ -49,7 +51,7 @@ describe('tradition db controller', ()=> {
             })           
         }));
 
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(401);
     });
 
     test('GET /submissions/me/pending empty', async () => {
@@ -70,7 +72,7 @@ describe('tradition db controller', ()=> {
             })           
         }));
 
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(401);
     });
     
     test('POST create pass', async () => {

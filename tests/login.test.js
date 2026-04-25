@@ -2,6 +2,8 @@ const http = require('http');
 const app = require('../src/index');
 const prisma = require('../src/config/database');
 
+process.env.NODE_ENV = 'test';
+
 let server;
 let baseUrl;
 
@@ -168,14 +170,13 @@ describe('/login login apis', ()=> {
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
-                 email: "test@charlotte.edu",
-                password: "testtest",
+                 email: "staff@charlotte.edu",
+                password: "staff123",
             })           
         }));
         const data = await res.json();
 
-        console.log("==============================\n" + res.status);
-        console.log("==============================\n" + data);
+        expect(res.status).toBe(200);
     });
 });
 
