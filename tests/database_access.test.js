@@ -30,7 +30,7 @@ describe('tradition db controller', ()=> {
     });
 
     test('GET /api/traditions?search where search has a query', async () => {
-        const res = await(fetch(`${baseUrl}/api/traditions?search=football`));
+        const res = await(fetch(`${baseUrl}/api/traditions?search=football&tags=sports&sortBy=azAsc`));
         const data = await res.json();
 
         expect(res.status).toBe(200);
