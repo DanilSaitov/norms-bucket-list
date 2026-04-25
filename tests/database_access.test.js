@@ -2,6 +2,8 @@ const http = require('http');
 const app = require('../src/index');
 const prisma = require('../src/config/database');
 
+process.env.NODE_ENV = 'test';
+
 let server;
 let baseUrl;
 
