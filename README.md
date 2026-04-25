@@ -47,7 +47,7 @@ UNC Charlotte campus traditions tracker for students.
 3. **Set up PostgreSQL database:**
    - Open pgAdmin and start your PostgreSQL server
    - Create a database named `norms_bucketlist` (or match your DATABASE_URL)
-   - Verify the server is running on port 5432 (or your configured port)
+   - Verify the server is running on port 5432 
 
 4. **Run database migrations:**
    ```bash
@@ -72,6 +72,8 @@ UNC Charlotte campus traditions tracker for students.
    - Database demo: `http://localhost:3000/db` (requires PostgreSQL running)
 
 ### Frontend Setup
+   
+   Ensure the backend is still running, open a new terminal (or tab) and run the following commands:
 
 1. **Navigate to frontend:**
    ```bash
@@ -108,11 +110,3 @@ npm run console
 - `npm run db:studio` - Open Prisma Studio to view/edit database in browser
 - `npm run db:push` - Push schema changes without creating migration files
 
-## Environment Variables
-
-Create a `.env` file in the root directory:
-
-```
-DATABASE_URL=postgresql://username:password@localhost:5432/norms_bucketlist
-PORT=3000
-```

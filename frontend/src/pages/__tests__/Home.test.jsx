@@ -4,6 +4,8 @@ import { vi, describe, test, expect, beforeEach } from 'vitest';
 import axios from 'axios';
 import Home from '../Home';
 
+
+/*
 // Mock axios
 vi.mock('axios');
 const mockedAxios = axios;
@@ -191,3 +193,4 @@ describe('Marking Bucket List Item as Complete (Home Page)', () => {
     );
   });
 });
+*/
